@@ -1,42 +1,20 @@
-import "./index.css";
+import { Route, Routes } from "react-router-dom";
+import MainLayout from "./layouts/MainLayout";
+import Home from "./pages/Home";
+import Categories from "./pages/Categories";
+import Products from "./pages/Products";
+import Cart from "./pages/Cart";
 
 function App() {
   return (
-    <main className="app">
-      <section className="hero">
-        <nav className="navbar">
-          <div className="logo">KemalReis</div>
-
-          <div className="navLinks">
-            <a>Categories</a>
-            <a>Deals</a>
-            <a>New Arrivals</a>
-            <a>Support</a>
-          </div>
-
-          <button className="navButton">Start Shopping</button>
-        </nav>
-
-        <div className="heroContent">
-          <p className="eyebrow">Global commerce, reis edition.</p>
-
-          <h1>
-            Shop smarter. <br />
-            Discover better.
-          </h1>
-
-          <p className="heroText">
-            KemalReis is being built as a premium e-commerce experience for
-            products, deals, categories and smart recommendations.
-          </p>
-
-          <div className="heroActions">
-            <button>Explore Products</button>
-            <button className="ghost">View Categories</button>
-          </div>
-        </div>
-      </section>
-    </main>
+    <Routes>
+      <Route element={<MainLayout />}>
+        <Route path="/" element={<Home />} />
+        <Route path="/categories" element={<Categories />} />
+        <Route path="/products" element={<Products />} />
+        <Route path="/cart" element={<Cart />} />
+      </Route>
+    </Routes>
   );
 }
 
