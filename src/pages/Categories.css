@@ -1,0 +1,148 @@
+.categoriesPage {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 90px 28px 120px;
+}
+
+.categoriesHero {
+  padding: 70px 0 55px;
+}
+
+.categoriesHero span {
+  display: inline-block;
+  color: #ffbe55;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: 12px;
+}
+
+.categoriesHero h1 {
+  max-width: 900px;
+  margin: 0 0 18px;
+  font-size: clamp(52px, 8vw, 108px);
+  line-height: 0.92;
+  letter-spacing: -0.08em;
+  color: #ffffff;
+}
+
+.categoriesHero p {
+  max-width: 660px;
+  margin: 0;
+  color: rgba(255, 255, 255, 0.68);
+  font-size: 20px;
+  line-height: 1.6;
+}
+
+.categoryGroups {
+  display: flex;
+  flex-direction: column;
+  gap: 34px;
+}
+
+.categoryGroup {
+  padding: 26px;
+  border-radius: 32px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.045);
+  backdrop-filter: blur(18px);
+}
+
+.categoryGroupHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 24px;
+}
+
+.categoryTitleBox {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.categoryIcon {
+  width: 58px;
+  height: 58px;
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  border-radius: 20px;
+  font-size: 28px;
+  background:
+    radial-gradient(circle at center, rgba(255, 190, 85, 0.2), transparent 60%),
+    rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.categoryGroupHeader span {
+  display: inline-block;
+  color: #ffbe55;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+
+.categoryGroupHeader h2 {
+  max-width: 620px;
+  margin: 0;
+  color: #ffffff;
+  font-size: clamp(24px, 3vw, 36px);
+  line-height: 1.05;
+  letter-spacing: -0.05em;
+}
+
+.categoryGroupHeader p {
+  margin: 8px 0 0;
+  white-space: nowrap;
+  color: rgba(255, 255, 255, 0.58);
+  font-size: 15px;
+  font-weight: 800;
+}
+
+.categoryProductsGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 18px;
+}
+
+@media (max-width: 1000px) {
+  .categoryProductsGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .categoryGroupHeader {
+    flex-direction: column;
+  }
+
+  .categoryGroupHeader p {
+    margin: 0;
+  }
+}
+
+@media (max-width: 620px) {
+  .categoriesPage {
+    padding: 60px 16px 90px;
+  }
+
+  .categoriesHero {
+    padding: 45px 0 35px;
+  }
+
+  .categoryGroup {
+    padding: 18px;
+    border-radius: 26px;
+  }
+
+  .categoryTitleBox {
+    flex-direction: column;
+  }
+
+  .categoryProductsGrid {
+    grid-template-columns: 1fr;
+  }
+}

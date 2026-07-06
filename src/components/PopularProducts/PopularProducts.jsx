@@ -1,6 +1,6 @@
-import { useLanguage } from "../../i18n/LanguageContext";
 import products from "../../data/products";
 import ProductCard from "../ProductCard/ProductCard";
+import { useLanguage } from "../../i18n/LanguageContext";
 import "./PopularProducts.css";
 
 function PopularProducts() {
@@ -8,16 +8,16 @@ function PopularProducts() {
 
   return (
     <section className="popularProducts">
-      <div className="container">
-        <p className="sectionTag">{t("popularProducts.tag")}</p>
-
+      <div className="popularProductsHeader">
+        <span>{t("popularProducts.tag")}</span>
         <h2>{t("popularProducts.title")}</h2>
+        <p>{t("popularProducts.text")}</p>
+      </div>
 
-        <div className="productsGrid">
-          {products.map((product) => (
-            <ProductCard key={product.title} product={product} />
-          ))}
-        </div>
+      <div className="popularProductsGrid">
+        {products.map((product) => (
+          <ProductCard key={product.key} product={product} />
+        ))}
       </div>
     </section>
   );

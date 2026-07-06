@@ -1,6 +1,12 @@
-.searchBar {
+.searchBarWrap {
   width: min(720px, calc(100% - 32px));
   margin: 34px auto 0;
+  position: relative;
+  z-index: 15;
+}
+
+.searchBar {
+  width: 100%;
   display: flex;
   align-items: center;
   gap: 14px;
@@ -8,14 +14,24 @@
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.08);
   border: 1px solid rgba(255, 255, 255, 0.12);
+  transition:
+    border-color 0.2s ease,
+    background 0.2s ease;
+}
+
+.searchBar:focus-within {
+  border-color: rgba(255, 190, 85, 0.45);
+  background: rgba(255, 255, 255, 0.1);
 }
 
 .searchBar svg {
-  color: #94a3b8;
+  flex: 0 0 auto;
+  color: #ffbe55;
 }
 
 .searchBar input {
   flex: 1;
+  min-width: 0;
   border: none;
   outline: none;
   background: transparent;
@@ -23,8 +39,12 @@
   font-size: 1rem;
 }
 
+.searchBar input::-webkit-search-cancel-button {
+  cursor: pointer;
+}
+
 .searchBar input::placeholder {
-  color: #94a3b8;
+  color: rgba(255, 255, 255, 0.48);
 }
 
 .searchBar button {
@@ -32,12 +52,100 @@
   border-radius: 999px;
   padding: 12px 22px;
   background: #ffffff;
-  color: #0f172a;
-  font-weight: 800;
+  color: #050505;
+  font-weight: 900;
   cursor: pointer;
+  transition:
+    transform 0.2s ease,
+    opacity 0.2s ease;
+}
+
+.searchBar button:hover {
+  transform: scale(1.04);
+  opacity: 0.92;
+}
+
+.searchSuggestions {
+  position: absolute;
+  top: calc(100% + 12px);
+  left: 0;
+  right: 0;
+  padding: 10px;
+  border-radius: 26px;
+  background: rgba(10, 10, 10, 0.92);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(20px);
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.45);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  overflow: hidden;
+}
+
+.searchSuggestion {
+  width: 100%;
+  border: none;
+  border-radius: 18px;
+  padding: 12px;
+  background: transparent;
+  color: #ffffff;
+  cursor: pointer;
+  display: grid;
+  grid-template-columns: 44px 1fr auto;
+  align-items: center;
+  gap: 12px;
+  text-align: left;
+  transition:
+    background 0.2s ease,
+    transform 0.2s ease;
+}
+
+.searchSuggestion:hover,
+.searchSuggestion.active {
+  background: rgba(255, 190, 85, 0.12);
+}
+
+.suggestionIcon {
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border-radius: 16px;
+  font-size: 24px;
+  background:
+    radial-gradient(circle at center, rgba(255, 190, 85, 0.2), transparent 60%),
+    rgba(255, 255, 255, 0.07);
+}
+
+.suggestionContent {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.suggestionContent strong {
+  color: #ffffff;
+  font-size: 15px;
+  letter-spacing: -0.02em;
+}
+
+.suggestionContent small {
+  color: rgba(255, 255, 255, 0.56);
+  font-size: 13px;
+}
+
+.suggestionPrice {
+  color: #ffbe55;
+  font-weight: 900;
+  font-size: 14px;
 }
 
 @media (max-width: 520px) {
+  .searchBarWrap {
+    width: calc(100% - 32px);
+  }
+
   .searchBar {
     border-radius: 24px;
     align-items: stretch;
@@ -47,5 +155,21 @@
 
   .searchBar input {
     width: 100%;
+  }
+
+  .searchBar button {
+    width: 100%;
+  }
+
+  .searchSuggestions {
+    border-radius: 22px;
+  }
+
+  .searchSuggestion {
+    grid-template-columns: 42px 1fr;
+  }
+
+  .suggestionPrice {
+    grid-column: 2;
   }
 }

@@ -1,12 +1,14 @@
 import { Link } from "react-router-dom";
 import { ShoppingBag } from "lucide-react";
 import { useLanguage } from "../../i18n/LanguageContext";
+import { useCart } from "../../context/CartContext";
 import LanguageSwitcher from "../LanguageSwitcher";
 import siteConfig from "../../config/site";
 import "./Header.css";
 
 function Header() {
   const { t } = useLanguage();
+  const { cartCount } = useCart();
 
   return (
     <header className="headerWrapper">
@@ -25,7 +27,9 @@ function Header() {
         <div className="headerActions">
           <Link to="/cart" className="cartButton">
             <ShoppingBag size={18} />
-            {t("header.cart")}
+            <span>{t("header.cart")}</span>
+
+            {cartCount > 0 && <strong className="cartCount">{cartCount}</strong>}
           </Link>
 
           <LanguageSwitcher />
