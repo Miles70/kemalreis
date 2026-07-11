@@ -11,7 +11,9 @@
     "server:install": "npm --prefix server install",
     "server:dev": "npm --prefix server run dev",
     "server:start": "npm --prefix server start",
-    "server:seed": "npm --prefix server run seed"
+    "server:seed": "npm --prefix server run seed",
+    "server:translate": "npm --prefix server run translate --",
+    "server:translate:status": "npm --prefix server run translate:status"
   },
   "dependencies": {
     "@reown/appkit": "^1.8.22",
