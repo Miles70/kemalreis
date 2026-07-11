@@ -35,6 +35,28 @@ function buildSort(sortValue) {
   }
 }
 
+function wait(milliseconds) {
+  return new Promise((resolve) => setTimeout(resolve, milliseconds));
+}
+
+async function localizeProductDetail(productDocument, language) {
+  let product = await localizeCatalogProduct(productDocument, language);
+
+  if (language === "en" || product.translationLanguage === language) {
+    return product;
+  }
+
+  await wait(700);
+  product = await localizeCatalogProduct(productDocument, language);
+
+  if (product.translationLanguage === language) return product;
+
+  return {
+    ...applyCachedCatalogSummaryTranslation(product, language),
+    translationPending: true,
+  };
+}
+
 productsRouter.get("/categories", async (request, response, next) => {
   try {
     const language = normalizeCatalogLanguage(request.query.lang);
@@ -145,7 +167,7 @@ productsRouter.get("/:productKey", async (request, response, next) => {
       return response.status(404).json({ message: "Product not found." });
     }
 
-    const product = await localizeCatalogProduct(productDocument, language);
+    const product = await localizeProductDetail(productDocument, language);
     return response.json({ product });
   } catch (error) {
     return next(error);
