@@ -1,6 +1,6 @@
 import "dotenv/config";
 import { connectDatabase, disconnectDatabase } from "../config/database.js";
-import { importOpenFactsCatalog } from "../services/openFactsImport.js";
+import { importOpenFactsCatalog } from "../services/openFactsImportV2.js";
 
 try {
   await connectDatabase();
