@@ -1,9 +1,9 @@
-import { useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import ProductCard from "../components/ProductCard/ProductCard";
 import { useCart } from "../context/CartContext";
-import products from "../data/products";
 import { useLanguage } from "../i18n/LanguageContext";
+import { getProduct, getProducts } from "../services/productsApi";
 import "./ProductDetails.css";
 
 const detailTranslations = {
@@ -30,18 +30,11 @@ const detailTranslations = {
     notFound: "Product not found",
     notFoundText: "This product may have been removed or the address may be incorrect.",
     browse: "Browse all products",
-    descriptions: {
-      electronics: "A carefully selected technology product designed for modern performance, daily reliability and a premium user experience.",
-      fashion: "A versatile fashion essential selected for comfort, clean style and effortless everyday use.",
-      home: "A functional home product that combines modern design, practical use and lasting comfort.",
-      gaming: "A performance-focused gaming product built for responsive control, immersive sessions and a cleaner setup.",
-    },
-    features: {
-      electronics: ["Modern performance", "Premium build quality", "Reliable everyday use"],
-      fashion: ["Comfortable everyday fit", "Versatile modern style", "Selected durable materials"],
-      home: ["Functional modern design", "Easy daily use", "Built for lasting comfort"],
-      gaming: ["Responsive performance", "Comfort for long sessions", "Setup-ready design"],
-    },
+    loading: "Loading product...",
+    catalog: "Open catalog product",
+    brand: "Brand",
+    pack: "Package",
+    source: "Catalog verified",
   },
   tr: {
     back: "Ürünlere dön",
@@ -66,18 +59,11 @@ const detailTranslations = {
     notFound: "Ürün bulunamadı",
     notFoundText: "Bu ürün kaldırılmış veya bağlantı hatalı olabilir.",
     browse: "Tüm ürünleri gör",
-    descriptions: {
-      electronics: "Modern performans, günlük güvenilirlik ve premium kullanım deneyimi için özenle seçilmiş bir teknoloji ürünü.",
-      fashion: "Konfor, sade stil ve günlük kullanım için seçilmiş çok yönlü bir moda ürünü.",
-      home: "Modern tasarımı, pratik kullanımı ve kalıcı konforu bir araya getiren işlevsel bir ev ürünü.",
-      gaming: "Hızlı kontrol, sürükleyici oyun deneyimi ve temiz kurulum için geliştirilmiş performans odaklı bir ürün.",
-    },
-    features: {
-      electronics: ["Modern performans", "Premium yapı kalitesi", "Güvenilir günlük kullanım"],
-      fashion: ["Konforlu günlük kalıp", "Çok yönlü modern stil", "Seçilmiş dayanıklı malzemeler"],
-      home: ["İşlevsel modern tasarım", "Kolay günlük kullanım", "Uzun süreli konfor"],
-      gaming: ["Hızlı tepki performansı", "Uzun kullanımda konfor", "Kuruluma hazır tasarım"],
-    },
+    loading: "Ürün yükleniyor...",
+    catalog: "Açık katalog ürünü",
+    brand: "Marka",
+    pack: "Paket",
+    source: "Katalog doğrulandı",
   },
   ru: {
     back: "Назад к товарам",
@@ -94,26 +80,19 @@ const detailTranslations = {
     delivery: "Быстрая доставка",
     deliveryText: "Быстрая подготовка и отправка с отслеживанием.",
     payment: "Безопасная оплата",
-    paymentText: "Защищённое оформление и готовая к Web3 инфраструктура.",
+    paymentText: "Защищённое оформление и Web3-инфраструктура.",
     returns: "Простой возврат",
-    returnsText: "Удобная поддержка возврата для подходящих заказов.",
+    returnsText: "Удобная поддержка возврата подходящих заказов.",
     related: "Вам также может понравиться",
-    relatedText: "Другие выбранные товары из этой категории.",
+    relatedText: "Другие товары из этой категории.",
     notFound: "Товар не найден",
     notFoundText: "Товар мог быть удалён или адрес указан неверно.",
     browse: "Смотреть все товары",
-    descriptions: {
-      electronics: "Технологичный продукт, выбранный для современной производительности, надёжности и премиального опыта.",
-      fashion: "Универсальный модный товар для комфорта, современного стиля и ежедневного использования.",
-      home: "Функциональный товар для дома, сочетающий современный дизайн, практичность и комфорт.",
-      gaming: "Игровой продукт для быстрого управления, длительных сессий и аккуратной игровой зоны.",
-    },
-    features: {
-      electronics: ["Современная производительность", "Премиальное качество", "Надёжность каждый день"],
-      fashion: ["Комфортная посадка", "Современный универсальный стиль", "Прочные материалы"],
-      home: ["Функциональный дизайн", "Простое использование", "Долговечный комфорт"],
-      gaming: ["Быстрый отклик", "Комфорт в долгих сессиях", "Готово для игровой зоны"],
-    },
+    loading: "Загрузка товара...",
+    catalog: "Товар из открытого каталога",
+    brand: "Бренд",
+    pack: "Упаковка",
+    source: "Каталог подтверждён",
   },
   ar: {
     back: "العودة إلى المنتجات",
@@ -134,22 +113,15 @@ const detailTranslations = {
     returns: "إرجاع سهل",
     returnsText: "دعم مبسط لإرجاع الطلبات المؤهلة.",
     related: "قد يعجبك أيضاً",
-    relatedText: "منتجات مختارة أخرى من الفئة نفسها.",
+    relatedText: "منتجات أخرى من الفئة نفسها.",
     notFound: "المنتج غير موجود",
     notFoundText: "ربما تمت إزالة المنتج أو أن الرابط غير صحيح.",
     browse: "تصفح كل المنتجات",
-    descriptions: {
-      electronics: "منتج تقني مختار بعناية للأداء الحديث والاعتمادية اليومية وتجربة استخدام مميزة.",
-      fashion: "قطعة أزياء متعددة الاستخدامات تجمع الراحة والأناقة وسهولة الاستخدام اليومي.",
-      home: "منتج منزلي عملي يجمع التصميم الحديث وسهولة الاستخدام والراحة الدائمة.",
-      gaming: "منتج ألعاب يركز على الأداء والاستجابة السريعة والراحة أثناء الجلسات الطويلة.",
-    },
-    features: {
-      electronics: ["أداء حديث", "جودة تصنيع مميزة", "استخدام يومي موثوق"],
-      fashion: ["راحة للاستخدام اليومي", "أسلوب عصري متعدد الاستخدامات", "مواد مختارة ومتينة"],
-      home: ["تصميم عصري عملي", "استخدام يومي سهل", "راحة تدوم طويلاً"],
-      gaming: ["استجابة سريعة", "راحة للجلسات الطويلة", "تصميم جاهز للإعداد"],
-    },
+    loading: "جارٍ تحميل المنتج...",
+    catalog: "منتج من كتالوج مفتوح",
+    brand: "العلامة التجارية",
+    pack: "العبوة",
+    source: "تم التحقق من الكتالوج",
   },
   zh: {
     back: "返回产品列表",
@@ -166,51 +138,81 @@ const detailTranslations = {
     delivery: "快速配送",
     deliveryText: "快速备货并提供物流追踪。",
     payment: "安全支付",
-    paymentText: "受保护的结账流程和 Web3 就绪基础设施。",
+    paymentText: "受保护的结账流程和 Web3 基础设施。",
     returns: "轻松退货",
     returnsText: "符合条件的订单可获得便捷退货支持。",
     related: "你可能还喜欢",
-    relatedText: "同一分类中的更多精选产品。",
+    relatedText: "同一分类中的更多商品。",
     notFound: "未找到产品",
     notFoundText: "该产品可能已下架，或链接地址不正确。",
     browse: "浏览所有产品",
-    descriptions: {
-      electronics: "为现代性能、日常可靠性和高端使用体验精心挑选的科技产品。",
-      fashion: "兼顾舒适、简洁风格和日常穿搭的多用途时尚单品。",
-      home: "融合现代设计、实用功能和持久舒适感的家居产品。",
-      gaming: "面向快速响应、沉浸体验和整洁桌面的高性能游戏产品。",
-    },
-    features: {
-      electronics: ["现代性能", "高品质做工", "可靠日常使用"],
-      fashion: ["舒适日常版型", "现代百搭风格", "精选耐用材质"],
-      home: ["实用现代设计", "轻松日常使用", "持久舒适体验"],
-      gaming: ["快速响应性能", "长时间使用舒适", "适合游戏桌面"],
-    },
+    loading: "正在加载商品...",
+    catalog: "开放目录商品",
+    brand: "品牌",
+    pack: "包装",
+    source: "目录已验证",
   },
 };
 
 function ProductDetails() {
   const { productKey } = useParams();
-  const { language, t } = useLanguage();
+  const { language } = useLanguage();
   const { addToCart } = useCart();
+  const [product, setProduct] = useState(null);
+  const [relatedProducts, setRelatedProducts] = useState([]);
   const [quantity, setQuantity] = useState(1);
   const [isAdded, setIsAdded] = useState(false);
-
+  const [status, setStatus] = useState("loading");
   const labels = detailTranslations[language] || detailTranslations.en;
-  const product = products.find((item) => item.key === productKey);
 
-  const relatedProducts = useMemo(() => {
-    if (!product) return [];
+  useEffect(() => {
+    const controller = new AbortController();
 
-    return products
-      .filter(
-        (item) => item.categoryKey === product.categoryKey && item.key !== product.key,
-      )
-      .slice(0, 4);
-  }, [product]);
+    async function loadProduct() {
+      try {
+        setStatus("loading");
+        setQuantity(1);
+
+        const payload = await getProduct(productKey, {
+          signal: controller.signal,
+        });
+        const loadedProduct = payload.product;
+        setProduct(loadedProduct);
+        setStatus("success");
+
+        const relatedPayload = await getProducts(
+          {
+            category: loadedProduct.categoryKey,
+            page: 1,
+            limit: 5,
+            sort: "popular",
+          },
+          { signal: controller.signal }
+        );
+
+        setRelatedProducts(
+          (relatedPayload.products || [])
+            .filter((item) => item.key !== loadedProduct.key)
+            .slice(0, 4)
+        );
+      } catch (error) {
+        if (error.name === "AbortError") return;
+        console.error(error);
+        setProduct(null);
+        setRelatedProducts([]);
+        setStatus(error.status === 404 ? "not-found" : "error");
+      }
+    }
+
+    loadProduct();
+    return () => controller.abort();
+  }, [productKey]);
 
   function formatPrice(price) {
-    return `$${Number(price || 0).toLocaleString("en-US")}`;
+    return `$${Number(price || 0).toLocaleString("en-US", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    })}`;
   }
 
   function handleImageError(event) {
@@ -231,19 +233,27 @@ function ProductDetails() {
 
     if (product.badge === "sale" && product.oldPrice > product.price) {
       const discount = Math.round(
-        ((product.oldPrice - product.price) / product.oldPrice) * 100,
+        ((product.oldPrice - product.price) / product.oldPrice) * 100
       );
-
       return `-${discount}%`;
     }
 
     if (product.badge === "new") return labels.new;
     if (product.badge === "stock") return labels.inStock;
-
     return "";
   }
 
-  if (!product) {
+  if (status === "loading") {
+    return (
+      <main className="productDetailsPage">
+        <section className="productDetailsNotFound">
+          <p>{labels.loading}</p>
+        </section>
+      </main>
+    );
+  }
+
+  if (status !== "success" || !product) {
     return (
       <main className="productDetailsPage">
         <section className="productDetailsNotFound">
@@ -256,12 +266,19 @@ function ProductDetails() {
     );
   }
 
-  const categoryTitle = t(`categories.${product.categoryKey}.title`);
-  const description = labels.descriptions[product.categoryKey];
-  const features = labels.features[product.categoryKey] || [];
-  const savings = Math.max(0, Number(product.oldPrice || 0) - Number(product.price || 0));
+  const categoryTitle = product.categoryLabel || product.categoryKey;
+  const savings = Math.max(
+    0,
+    Number(product.oldPrice || 0) - Number(product.price || 0)
+  );
   const badgeLabel = getBadgeLabel();
   const fallbackLetter = product.title?.charAt(0)?.toUpperCase() || "K";
+  const maximumQuantity = Math.max(1, Math.min(10, Number(product.stock) || 1));
+  const features = [
+    product.brand ? `${labels.brand}: ${product.brand}` : labels.catalog,
+    product.quantity ? `${labels.pack}: ${product.quantity}` : categoryTitle,
+    labels.source,
+  ];
 
   return (
     <main className="productDetailsPage">
@@ -305,7 +322,9 @@ function ProductDetails() {
         <div className="productDetailsContent">
           <p className="productDetailsCategory">{categoryTitle}</p>
           <h1>{product.title}</h1>
-          <p className="productDetailsDescription">{description}</p>
+          <p className="productDetailsDescription">
+            {product.description || labels.catalog}
+          </p>
 
           <div className="productDetailsPriceRow">
             <strong>{formatPrice(product.price)}</strong>
@@ -322,7 +341,7 @@ function ProductDetails() {
 
           <div className="productDetailsStock">
             <span aria-hidden="true" />
-            {labels.inStock}
+            {labels.inStock} ({product.stock})
           </div>
 
           <div className="productDetailsHighlights">
@@ -351,7 +370,11 @@ function ProductDetails() {
                 <strong>{quantity}</strong>
                 <button
                   type="button"
-                  onClick={() => setQuantity((current) => Math.min(10, current + 1))}
+                  onClick={() =>
+                    setQuantity((current) =>
+                      Math.min(maximumQuantity, current + 1)
+                    )
+                  }
                   aria-label="Increase quantity"
                 >
                   +
@@ -388,7 +411,6 @@ function ProductDetails() {
             <p>{labels.deliveryText}</p>
           </div>
         </article>
-
         <article>
           <span aria-hidden="true">🔒</span>
           <div>
@@ -396,7 +418,6 @@ function ProductDetails() {
             <p>{labels.paymentText}</p>
           </div>
         </article>
-
         <article>
           <span aria-hidden="true">↩️</span>
           <div>
