@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useLanguage } from "../i18n/LanguageContext";
 import { useCart } from "../context/CartContext";
+import { createOrder } from "../services/orderApi";
 import "./Checkout.css";
 
 function safeParse(value, fallback) {
@@ -35,8 +36,8 @@ function Checkout() {
     address: "",
     note: "",
   });
-
   const [error, setError] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const text = (key, fallback) => {
     const value = t(key);
@@ -53,7 +54,7 @@ function Checkout() {
     }, 0);
   }, [cartItems, cartTotal]);
 
-  const shipping = subtotal > 0 ? 0 : 0;
+  const shipping = 0;
   const total = subtotal + shipping;
 
   const formatPrice = (price) => {
@@ -82,8 +83,10 @@ function Checkout() {
     if (error) setError("");
   };
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
+
+    if (isSubmitting) return;
 
     if (!hasItems) {
       setError(text("checkoutPage.emptyError", "Your cart is empty."));
@@ -103,27 +106,39 @@ function Checkout() {
       return;
     }
 
-    const order = {
-      id: `KMR-${Date.now()}`,
-      status: "pending",
-      createdAt: new Date().toISOString(),
-      customer: {
-        fullName: formData.fullName.trim(),
-        email: formData.email.trim(),
-        phone: formData.phone.trim(),
-        city: formData.city.trim(),
-        address: formData.address.trim(),
-        note: formData.note.trim(),
-      },
-      items: cartItems,
-      subtotal,
-      shipping,
-      total,
-    };
+    setError("");
+    setIsSubmitting(true);
 
-    saveOrder(order);
-    clearCart();
-    navigate("/order-success");
+    try {
+      const order = await createOrder({
+        customer: {
+          fullName: formData.fullName.trim(),
+          email: formData.email.trim(),
+          phone: formData.phone.trim(),
+          city: formData.city.trim(),
+          address: formData.address.trim(),
+          note: formData.note.trim(),
+        },
+        items: cartItems.map((item) => ({
+          productKey: item.key,
+          quantity: Number(item.quantity || 1),
+        })),
+      });
+
+      saveOrder(order);
+      clearCart();
+      navigate("/order-success");
+    } catch (submitError) {
+      setError(
+        submitError.message ||
+          text(
+            "checkoutPage.serverError",
+            "The order could not be created. Please try again."
+          )
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   if (!hasItems) {
@@ -189,6 +204,7 @@ function Checkout() {
               placeholder={text("checkoutPage.fullNamePlaceholder", "John Carter")}
               value={formData.fullName}
               onChange={handleChange}
+              disabled={isSubmitting}
             />
           </div>
 
@@ -207,6 +223,7 @@ function Checkout() {
                 )}
                 value={formData.email}
                 onChange={handleChange}
+                disabled={isSubmitting}
               />
             </div>
 
@@ -224,6 +241,7 @@ function Checkout() {
                 )}
                 value={formData.phone}
                 onChange={handleChange}
+                disabled={isSubmitting}
               />
             </div>
           </div>
@@ -239,6 +257,7 @@ function Checkout() {
               placeholder={text("checkoutPage.cityPlaceholder", "Antalya")}
               value={formData.city}
               onChange={handleChange}
+              disabled={isSubmitting}
             />
           </div>
 
@@ -256,6 +275,7 @@ function Checkout() {
               )}
               value={formData.address}
               onChange={handleChange}
+              disabled={isSubmitting}
             />
           </div>
 
@@ -273,11 +293,18 @@ function Checkout() {
               )}
               value={formData.note}
               onChange={handleChange}
+              disabled={isSubmitting}
             />
           </div>
 
-          <button type="submit" className="checkoutSubmitButton">
-            {text("checkoutPage.placeOrder", "Place Order")}
+          <button
+            type="submit"
+            className="checkoutSubmitButton"
+            disabled={isSubmitting}
+          >
+            {isSubmitting
+              ? text("checkoutPage.creatingOrder", "Creating order...")
+              : text("checkoutPage.placeOrder", "Place Order")}
           </button>
         </form>
 
@@ -285,8 +312,7 @@ function Checkout() {
           <div className="checkoutSummaryHeader">
             <h2>{text("checkoutPage.summaryTitle", "Order Summary")}</h2>
             <p>
-              {cartItems.length}{" "}
-              {text("checkoutPage.itemType", "item type")}
+              {cartItems.length} {text("checkoutPage.itemType", "item type")}
             </p>
           </div>
 
