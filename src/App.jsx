@@ -8,6 +8,7 @@ import Cart from "./pages/Cart";
 import Checkout from "./pages/Checkout";
 import OrderSuccess from "./pages/OrderSuccess";
 import CartToast from "./components/CartToast/CartToast";
+import "./pages/CategoriesAmazon.css";
 
 function App() {
   return (
