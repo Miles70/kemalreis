@@ -35,6 +35,17 @@
   line-height: 1.7;
 }
 
+.popularProductsStatus {
+  margin: 0;
+  padding: 28px;
+  border: 1px solid var(--color-border);
+  border-radius: 22px;
+  background: var(--color-background-soft);
+  color: var(--color-text-secondary);
+  font-weight: 750;
+  text-align: center;
+}
+
 .popularProductsGrid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
