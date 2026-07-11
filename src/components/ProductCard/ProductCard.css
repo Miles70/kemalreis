@@ -3,12 +3,9 @@
   overflow: hidden;
   border: 1px solid var(--color-border);
   border-radius: 22px;
-  background: #ffffff;
+  background: #fff;
   box-shadow: 0 10px 30px rgba(20, 27, 45, 0.04);
-  transition:
-    border-color var(--transition-normal),
-    box-shadow var(--transition-normal),
-    transform var(--transition-normal);
+  transition: border-color var(--transition-normal), box-shadow var(--transition-normal), transform var(--transition-normal);
 }
 
 .productCard:hover {
@@ -19,26 +16,19 @@
 
 .productCard.added {
   border-color: rgba(240, 24, 96, 0.52);
-  box-shadow:
-    0 0 0 4px rgba(240, 24, 96, 0.07),
-    0 20px 46px rgba(240, 24, 96, 0.13);
+  box-shadow: 0 0 0 4px rgba(240, 24, 96, 0.07), 0 20px 46px rgba(240, 24, 96, 0.13);
   animation: productAddedPop 0.35s ease;
 }
 
 .productImage {
   position: relative;
   width: 100%;
-  height: 190px;
+  height: 230px;
   overflow: hidden;
   display: grid;
   place-items: center;
-  background:
-    radial-gradient(
-      circle at center,
-      rgba(240, 24, 96, 0.1),
-      transparent 62%
-    ),
-    #f7f8fb;
+  border-bottom: 1px solid rgba(15, 23, 42, 0.06);
+  background: #fff;
 }
 
 .productImage img {
@@ -46,22 +36,19 @@
   z-index: 2;
   width: 100%;
   height: 100%;
+  padding: 18px;
   display: block;
-  object-fit: cover;
+  object-fit: contain;
   object-position: center;
-  transition:
-    transform var(--transition-normal),
-    filter var(--transition-normal);
+  transition: transform var(--transition-normal), filter var(--transition-normal);
 }
 
 .productCard:hover .productImage img {
-  transform: scale(1.055);
-  filter: saturate(1.05);
+  transform: scale(1.035);
+  filter: saturate(1.03);
 }
 
-.productImage img.imageError {
-  display: none;
-}
+.productImage img.imageError { display: none; }
 
 .productImageFallback {
   position: absolute;
@@ -69,10 +56,9 @@
   z-index: 1;
   display: grid;
   place-items: center;
-  color: rgba(240, 24, 96, 0.55);
+  color: rgba(240, 24, 96, 0.32);
   font-size: 58px;
   font-weight: 900;
-  letter-spacing: -0.08em;
 }
 
 .productBadge {
@@ -92,25 +78,11 @@
   letter-spacing: 0.04em;
   text-transform: uppercase;
   box-shadow: 0 8px 22px rgba(20, 27, 45, 0.16);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
 }
 
-.productBadge.sale {
-  background: var(--color-primary);
-  color: #ffffff;
-}
-
-.productBadge.new {
-  background: rgba(11, 15, 25, 0.93);
-  color: #ffffff;
-}
-
-.productBadge.stock {
-  border: 1px solid rgba(22, 163, 74, 0.22);
-  background: rgba(255, 255, 255, 0.94);
-  color: #15803d;
-}
+.productBadge.sale { background: var(--color-primary); color: #fff; }
+.productBadge.new { background: rgba(11, 15, 25, 0.93); color: #fff; }
+.productBadge.stock { border: 1px solid rgba(22, 163, 74, 0.22); background: rgba(255, 255, 255, 0.94); color: #15803d; }
 
 .productBadgeDot {
   width: 7px;
@@ -120,9 +92,7 @@
   box-shadow: 0 0 0 4px rgba(34, 197, 94, 0.13);
 }
 
-.productContent {
-  padding: 21px;
-}
+.productContent { padding: 21px; }
 
 .productCategory {
   margin: 0 0 9px;
@@ -135,14 +105,19 @@
 
 .productContent h3 {
   min-height: 50px;
-  margin: 0 0 20px;
+  margin: 0 0 12px;
+  display: -webkit-box;
+  overflow: hidden;
   color: var(--color-text);
-  font-size: 20px;
-  line-height: 1.25;
-  letter-spacing: -0.035em;
+  font-size: 18px;
+  line-height: 1.35;
+  letter-spacing: -0.03em;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
 }
 
 .productBottom {
+  margin-top: 18px;
   display: flex;
   align-items: flex-end;
   justify-content: space-between;
@@ -168,7 +143,6 @@
   color: var(--color-text-muted);
   font-size: 13px;
   font-weight: 700;
-  text-decoration-thickness: 1.5px;
 }
 
 .addButton {
@@ -179,95 +153,46 @@
   padding: 0;
   border: 1px solid rgba(15, 23, 42, 0.16);
   border-radius: 50%;
-  background: #ffffff;
-  color: #000000;
+  background: #fff;
+  color: #000;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   box-shadow: 0 8px 20px rgba(20, 27, 45, 0.08);
-  transition:
-    color var(--transition-fast),
-    background var(--transition-fast),
-    border-color var(--transition-fast),
-    box-shadow var(--transition-fast),
-    transform var(--transition-fast);
+  transition: color var(--transition-fast), background var(--transition-fast), border-color var(--transition-fast), transform var(--transition-fast);
 }
 
 .addButton svg {
   width: 20px;
   height: 20px;
   display: block;
-  flex-shrink: 0;
   stroke: currentColor;
 }
 
 .addButton:hover {
-  border-color: #000000;
-  background: #000000;
-  color: #ffffff;
-  box-shadow: 0 12px 24px rgba(20, 27, 45, 0.2);
+  border-color: #000;
+  background: #000;
+  color: #fff;
   transform: translateY(-2px) scale(1.04);
-}
-
-.addButton:active {
-  transform: translateY(0) scale(0.96);
-}
-
-.addButton:focus-visible {
-  outline: 3px solid rgba(240, 24, 96, 0.22);
-  outline-offset: 3px;
 }
 
 .addButton.added {
   border-color: var(--color-primary);
   background: var(--color-primary);
-  color: #ffffff;
-  box-shadow: 0 10px 22px var(--color-primary-shadow);
-}
-
-.addButton.added:hover {
-  border-color: var(--color-primary-hover);
-  background: var(--color-primary-hover);
-  color: #ffffff;
+  color: #fff;
 }
 
 @keyframes productAddedPop {
-  0% {
-    transform: scale(1);
-  }
-
-  45% {
-    transform: scale(1.025);
-  }
-
-  100% {
-    transform: scale(1);
-  }
+  0% { transform: scale(1); }
+  45% { transform: scale(1.025); }
+  100% { transform: scale(1); }
 }
 
 @media (max-width: 700px) {
-  .productImage {
-    height: 170px;
-  }
-
-  .productContent {
-    padding: 18px;
-  }
-
-  .productContent h3 {
-    min-height: 46px;
-    font-size: 18px;
-  }
-
-  .productPriceBlock strong {
-    font-size: 19px;
-  }
-
-  .addButton {
-    width: 42px;
-    min-width: 42px;
-    height: 42px;
-    min-height: 42px;
-  }
+  .productImage { height: 210px; }
+  .productContent { padding: 18px; }
+  .productContent h3 { font-size: 17px; }
+  .productPriceBlock strong { font-size: 19px; }
+  .addButton { width: 42px; min-width: 42px; height: 42px; min-height: 42px; }
 }
