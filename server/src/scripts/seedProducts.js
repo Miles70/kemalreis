@@ -5,11 +5,9 @@ import { syncProductsFromCatalog } from "../services/productSync.js";
 try {
   await connectDatabase();
   const result = await syncProductsFromCatalog();
-  console.log(
-    `Seed complete: ${result.modifiedCount || 0} updated, ${result.upsertedCount || 0} created.`
-  );
+  console.log(`Legacy demo cleanup complete: ${result.deletedCount || 0} removed.`);
 } catch (error) {
-  console.error("Seed failed:", error);
+  console.error("Legacy demo cleanup failed:", error);
   process.exitCode = 1;
 } finally {
   await disconnectDatabase();
