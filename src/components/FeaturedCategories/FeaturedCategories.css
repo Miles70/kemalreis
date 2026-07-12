@@ -28,7 +28,7 @@
 .categoryGrid {
   margin-top: 42px;
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(3, 1fr);
   gap: 18px;
 }
 
@@ -130,7 +130,7 @@
 .categoryCard p {
   position: relative;
   z-index: 1;
-  max-width: 250px;
+  max-width: 310px;
   margin: 0;
   color: var(--color-text-secondary);
   font-size: 15px;
