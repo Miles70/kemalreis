@@ -2,17 +2,27 @@ import { createContext, useContext, useEffect, useMemo, useState } from "react";
 
 const CartContext = createContext(null);
 
-const CART_STORAGE_KEY = "kemalreis_cart";
+const CART_STORAGE_KEY = "gabaloo_cart";
+const LEGACY_CART_STORAGE_KEY = "kemalreis_cart";
 
 function getStoredCart() {
   try {
     const storedCart = localStorage.getItem(CART_STORAGE_KEY);
 
-    if (!storedCart) {
+    if (storedCart) {
+      return JSON.parse(storedCart);
+    }
+
+    const legacyCart = localStorage.getItem(LEGACY_CART_STORAGE_KEY);
+
+    if (!legacyCart) {
       return [];
     }
 
-    return JSON.parse(storedCart);
+    const parsedLegacyCart = JSON.parse(legacyCart);
+    localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(parsedLegacyCart));
+    localStorage.removeItem(LEGACY_CART_STORAGE_KEY);
+    return parsedLegacyCart;
   } catch {
     return [];
   }
@@ -24,6 +34,7 @@ export function CartProvider({ children }) {
 
   useEffect(() => {
     localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cartItems));
+    localStorage.removeItem(LEGACY_CART_STORAGE_KEY);
   }, [cartItems]);
 
   useEffect(() => {
