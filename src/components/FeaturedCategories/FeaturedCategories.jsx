@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useLanguage } from "../../i18n/LanguageContext";
+import { getCategoryGroupText } from "../../i18n/categoryGroups";
 import categories from "../../data/categories";
 import "./FeaturedCategories.css";
 
@@ -27,7 +28,7 @@ const categoryIcons = {
 };
 
 function FeaturedCategories() {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
 
   return (
     <section className="featuredCategories">
@@ -38,7 +39,7 @@ function FeaturedCategories() {
         <div className="categoryGrid">
           {categories.map((category) => {
             const CategoryIcon = categoryIcons[category.key] || Sparkles;
-            const categoryTitle = t(`categoryGroups.${category.key}.title`);
+            const categoryTitle = getCategoryGroupText(language, category.key, "title");
 
             return (
               <Link
@@ -52,7 +53,7 @@ function FeaturedCategories() {
                 </div>
 
                 <h3>{categoryTitle}</h3>
-                <p>{t(`categoryGroups.${category.key}.description`)}</p>
+                <p>{getCategoryGroupText(language, category.key, "description")}</p>
 
                 <span className="categoryArrow" aria-hidden="true">
                   <svg viewBox="0 0 24 24" fill="none">
