@@ -2,6 +2,7 @@ import "dotenv/config";
 import { createApp } from "./app.js";
 import { connectDatabase, disconnectDatabase } from "./config/database.js";
 import { syncProductsFromCatalog } from "./services/productSync.js";
+import { normalizeExcessivelyLongProductTitles } from "./services/productTitleCleanup.js";
 
 const port = Number(process.env.PORT) || 5000;
 const app = createApp();
@@ -13,6 +14,11 @@ async function startServer() {
   const cleanupResult = await syncProductsFromCatalog();
   if (cleanupResult.deletedCount > 0) {
     console.log(`Legacy demo products removed: ${cleanupResult.deletedCount}.`);
+  }
+
+  const titleCleanupResult = await normalizeExcessivelyLongProductTitles();
+  if (titleCleanupResult.modifiedCount > 0) {
+    console.log(`Long product titles normalized: ${titleCleanupResult.modifiedCount}.`);
   }
 
   server = app.listen(port, () => {
