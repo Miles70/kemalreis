@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { ChevronLeft, ChevronRight, PackageSearch } from "lucide-react";
 import { useSearchParams } from "react-router-dom";
 import ProductCard from "../components/ProductCard/ProductCard";
+import SearchBar from "../components/SearchBar/SearchBar";
 import { useLanguage } from "../i18n/LanguageContext";
 import { getStoreProducts } from "../services/productsApi";
 import "./Products.css";
@@ -117,6 +118,10 @@ function Products() {
         <span>{t("productsPage.tag")}</span>
         <h1>{t("productsPage.title")}</h1>
         <p>{t("productsPage.text")}</p>
+
+        <div className="productsPageSearch">
+          <SearchBar initialValue={searchQuery} />
+        </div>
       </section>
 
       <section className="productsListSection">
