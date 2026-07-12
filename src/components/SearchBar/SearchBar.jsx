@@ -18,15 +18,19 @@ function categoryLabel(categoryKey, t) {
     .replace(/\b\w/g, (letter) => letter.toUpperCase());
 }
 
-function SearchBar() {
+function SearchBar({ initialValue = "" }) {
   const { t } = useLanguage();
   const navigate = useNavigate();
-  const [searchValue, setSearchValue] = useState("");
+  const [searchValue, setSearchValue] = useState(initialValue);
   const [isFocused, setIsFocused] = useState(false);
   const [activeIndex, setActiveIndex] = useState(-1);
   const [suggestions, setSuggestions] = useState([]);
 
   const query = searchValue.trim();
+
+  useEffect(() => {
+    setSearchValue(initialValue);
+  }, [initialValue]);
 
   useEffect(() => {
     let isCancelled = false;
@@ -166,7 +170,9 @@ function SearchBar() {
                 <small>{product.categoryTitle}</small>
               </span>
 
-              <span className="suggestionPrice">${Number(product.price || 0).toLocaleString("en-US")}</span>
+              <span className="suggestionPrice">
+                ${Number(product.price || 0).toLocaleString("en-US")}
+              </span>
             </button>
           ))}
         </div>
