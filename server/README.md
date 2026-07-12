@@ -4,18 +4,31 @@
 
 1. Copy `.env.example` to `.env`.
 2. Put your MongoDB Atlas connection string in `MONGODB_URI`.
-3. Install dependencies with `npm install` inside the `server` folder.
-4. Start the API with `npm run dev`.
-5. Start the Vite frontend from the project root with `npm run dev`.
+3. Set `ADMIN_EMAIL`, `ADMIN_PASSWORD` and a random `ADMIN_TOKEN_SECRET` with at least 32 characters.
+4. Install dependencies with `npm install` inside the `server` folder.
+5. Start the API with `npm run dev`.
+6. Start the Vite frontend from the project root with `npm run dev`.
 
 The frontend sends local `/api` requests through the Vite proxy to `http://localhost:5000`.
 
-## Main endpoints
+## Store endpoints
 
 - `GET /api/health`
 - `GET /api/products`
 - `GET /api/products/:productKey`
 - `POST /api/orders`
 - `GET /api/orders/:orderNumber?email=customer@example.com`
+
+## Admin endpoints
+
+- `POST /api/admin/login`
+- `GET /api/admin/session`
+- `GET /api/admin/dashboard`
+- `GET /api/admin/orders`
+- `PATCH /api/admin/orders/:orderNumber`
+- `GET /api/admin/products`
+- `PATCH /api/admin/products/:productKey`
+
+All admin endpoints except login require an `Authorization: Bearer <token>` header. Admin tokens expire after 12 hours.
 
 Order totals are recalculated on the server from the MongoDB product catalog. Client-submitted prices and totals are ignored.
