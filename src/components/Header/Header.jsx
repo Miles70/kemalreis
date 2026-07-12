@@ -59,7 +59,7 @@ function Header() {
             className="logo"
             aria-label={`${siteConfig.brandName} home`}
           >
-            <span className="logoMark">{siteConfig.shortName}</span>
+            <span className="logoMark">K</span>
             <span className="logoText">{siteConfig.brandName}</span>
           </Link>
 
