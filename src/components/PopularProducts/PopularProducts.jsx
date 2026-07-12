@@ -5,6 +5,8 @@ import { useLanguage } from "../../i18n/LanguageContext";
 import { getStoreProducts } from "../../services/productsApi";
 import "./PopularProducts.css";
 
+const HOME_PRODUCT_LIMIT = 100;
+
 function PopularProducts() {
   const { t } = useLanguage();
   const [products, setProducts] = useState([]);
@@ -14,7 +16,7 @@ function PopularProducts() {
   useEffect(() => {
     let isCancelled = false;
 
-    getStoreProducts({ page: 1, limit: 25 })
+    getStoreProducts({ page: 1, limit: HOME_PRODUCT_LIMIT })
       .then((data) => {
         if (!isCancelled) {
           setProducts(data.products || []);
@@ -46,7 +48,7 @@ function PopularProducts() {
 
       {isLoading ? (
         <div className="popularProductsGrid productsLoadingGrid">
-          {Array.from({ length: 8 }, (_, index) => (
+          {Array.from({ length: 12 }, (_, index) => (
             <div className="productLoadingCard" key={index} />
           ))}
         </div>
