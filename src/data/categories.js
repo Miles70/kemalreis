@@ -1,15 +1,39 @@
 const categories = [
   {
     key: "electronics",
+    sourceKeys: ["electronics", "mobile"],
   },
   {
     key: "fashion",
+    sourceKeys: ["fashion"],
   },
   {
-    key: "home",
+    key: "homeLivingOffice",
+    sourceKeys: ["home", "office", "appliances"],
   },
   {
-    key: "gaming",
+    key: "autoGardenTools",
+    sourceKeys: ["automotive", "tools"],
+  },
+  {
+    key: "motherBabyToys",
+    sourceKeys: ["baby", "toys"],
+  },
+  {
+    key: "sportsOutdoor",
+    sourceKeys: ["sports"],
+  },
+  {
+    key: "beautyCare",
+    sourceKeys: ["beauty"],
+  },
+  {
+    key: "supermarketPets",
+    sourceKeys: ["pets"],
+  },
+  {
+    key: "booksMusicFilmHobby",
+    sourceKeys: ["gaming"],
   },
 ];
 
