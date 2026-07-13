@@ -51,21 +51,97 @@ function shortenAddress(value) {
   return `${address.slice(0, 6)}...${address.slice(-4)}`;
 }
 
-function getPaymentErrorMessage(error, transactionWasSubmitted) {
+function getPaymentErrorMessage(error, transactionWasSubmitted, text) {
   const message = String(error?.shortMessage || error?.message || "");
 
   if (transactionWasSubmitted) {
-    return "Transaction was submitted. Use Verify Payment after it is confirmed on BNB Smart Chain.";
+    return text(
+      "orderSuccessPage.transactionSubmitted",
+      "The transaction was submitted. Use Verify Payment after it is confirmed on BNB Smart Chain."
+    );
   }
 
   if (
     error?.code === 4001 ||
     /rejected|denied|cancelled|canceled/i.test(message)
   ) {
-    return "The wallet request was cancelled.";
+    return text(
+      "orderSuccessPage.walletRequestCancelled",
+      "The wallet request was cancelled."
+    );
   }
 
-  return message || "Crypto payment could not be completed.";
+  const knownErrors = [
+    {
+      pattern: /not confirmed yet|needs? \d+ confirmation/i,
+      key: "transactionNotConfirmed",
+      fallback: "The transaction is not confirmed yet. Try again shortly.",
+    },
+    {
+      pattern: /wrong token contract/i,
+      key: "wrongTokenContract",
+      fallback: "The transaction used the wrong token contract.",
+    },
+    {
+      pattern: /different wallet/i,
+      key: "differentPayerWallet",
+      fallback: "The transaction was sent from a different wallet.",
+    },
+    {
+      pattern: /wrong wallet/i,
+      key: "wrongRecipientWallet",
+      fallback: "The transaction was sent to the wrong receiving wallet.",
+    },
+    {
+      pattern: /lower than the order total/i,
+      key: "insufficientPaymentAmount",
+      fallback: "The transaction amount is lower than the order total.",
+    },
+    {
+      pattern: /already been used/i,
+      key: "transactionAlreadyUsed",
+      fallback: "This transaction has already been used for another order.",
+    },
+    {
+      pattern: /already paid/i,
+      key: "orderAlreadyPaid",
+      fallback: "This order has already been paid.",
+    },
+    {
+      pattern: /rpc|blockchain.*unavailable|could not be reached|timed out/i,
+      key: "blockchainUnavailable",
+      fallback: "The blockchain service is temporarily unavailable.",
+    },
+    {
+      pattern: /not configured/i,
+      key: "receivingWalletNotConfigured",
+      fallback: "The crypto receiving wallet has not been configured on the server yet.",
+    },
+    {
+      pattern: /transaction failed|blockchain transaction failed/i,
+      key: "transactionFailed",
+      fallback: "The blockchain transaction failed.",
+    },
+    {
+      pattern: /invalid|valid transaction hash|required|transfer data/i,
+      key: "invalidTransaction",
+      fallback: "The transaction details are invalid.",
+    },
+  ];
+
+  const knownError = knownErrors.find(({ pattern }) => pattern.test(message));
+
+  if (knownError) {
+    return text(`orderSuccessPage.${knownError.key}`, knownError.fallback);
+  }
+
+  return (
+    message ||
+    text(
+      "orderSuccessPage.cryptoPaymentFailed",
+      "The crypto payment could not be completed."
+    )
+  );
 }
 
 function CryptoPayment({ order, onOrderUpdated }) {
@@ -149,7 +225,7 @@ function CryptoPayment({ order, onOrderUpdated }) {
         );
       } catch (error) {
         setPaymentStage("error");
-        setPaymentError(getPaymentErrorMessage(error, false));
+        setPaymentError(getPaymentErrorMessage(error, false, text));
       }
       return;
     }
@@ -157,7 +233,10 @@ function CryptoPayment({ order, onOrderUpdated }) {
     if (!paymentConfigured) {
       setPaymentStage("error");
       setPaymentError(
-        "Crypto receiving wallet is not configured on the server yet."
+        text(
+          "orderSuccessPage.receivingWalletNotConfigured",
+          "The crypto receiving wallet has not been configured on the server yet."
+        )
       );
       return;
     }
@@ -177,7 +256,12 @@ function CryptoPayment({ order, onOrderUpdated }) {
         switchChainMutation.switchChainAsync || switchChainMutation.mutateAsync;
 
       if (typeof switchChainAsync !== "function") {
-        throw new Error("Wallet network switching is unavailable.");
+        throw new Error(
+          text(
+            "orderSuccessPage.walletNetworkUnavailable",
+            "Wallet network switching is unavailable."
+          )
+        );
       }
 
       await switchChainAsync({ chainId: paymentChainId });
@@ -188,7 +272,12 @@ function CryptoPayment({ order, onOrderUpdated }) {
         writeContractMutation.mutateAsync;
 
       if (typeof writeContractAsync !== "function") {
-        throw new Error("Wallet contract transactions are unavailable.");
+        throw new Error(
+          text(
+            "orderSuccessPage.contractTransactionsUnavailable",
+            "Wallet contract transactions are unavailable."
+          )
+        );
       }
 
       const hash = await writeContractAsync({
@@ -218,7 +307,12 @@ function CryptoPayment({ order, onOrderUpdated }) {
       setPaymentStage("confirming");
 
       if (!publicClient) {
-        throw new Error("BNB Smart Chain client is unavailable.");
+        throw new Error(
+          text(
+            "orderSuccessPage.bscClientUnavailable",
+            "The BNB Smart Chain client is unavailable."
+          )
+        );
       }
 
       await publicClient.waitForTransactionReceipt({
@@ -230,19 +324,50 @@ function CryptoPayment({ order, onOrderUpdated }) {
       await verifyPayment(hash, String(address).toLowerCase());
     } catch (error) {
       setPaymentStage("error");
-      setPaymentError(getPaymentErrorMessage(error, Boolean(submittedHash)));
+      setPaymentError(
+        getPaymentErrorMessage(error, Boolean(submittedHash), text)
+      );
     }
   };
 
   const getPaymentButtonText = () => {
-    if (!paymentConfigured) return "Payment setup required";
-    if (paymentStage === "switching") return "Switching to BNB Chain...";
-    if (paymentStage === "signing") return "Confirm in wallet...";
-    if (paymentStage === "confirming") return "Waiting for confirmation...";
-    if (paymentStage === "verifying") return "Verifying payment...";
-    if (pendingTransactionHash) return "Verify Payment";
-    if (!isConnected) return "Connect Wallet";
-    return `Pay ${paymentAmount} ${paymentToken}`;
+    if (!paymentConfigured) {
+      return text(
+        "orderSuccessPage.paymentSetupRequired",
+        "Payment setup required"
+      );
+    }
+    if (paymentStage === "switching") {
+      return text(
+        "orderSuccessPage.switchingToBnb",
+        "Switching to BNB Chain..."
+      );
+    }
+    if (paymentStage === "signing") {
+      return text(
+        "orderSuccessPage.confirmInWallet",
+        "Confirm in wallet..."
+      );
+    }
+    if (paymentStage === "confirming") {
+      return text(
+        "orderSuccessPage.waitingForConfirmation",
+        "Waiting for confirmation..."
+      );
+    }
+    if (paymentStage === "verifying") {
+      return text(
+        "orderSuccessPage.verifyingPayment",
+        "Verifying payment..."
+      );
+    }
+    if (pendingTransactionHash) {
+      return text("orderSuccessPage.verifyPayment", "Verify Payment");
+    }
+    if (!isConnected) {
+      return text("orderSuccessPage.connectWallet", "Connect Wallet");
+    }
+    return `${text("orderSuccessPage.pay", "Pay")} ${paymentAmount} ${paymentToken}`;
   };
 
   if (isPaid && payment.transactionHash) {
@@ -276,7 +401,7 @@ function CryptoPayment({ order, onOrderUpdated }) {
           <p>
             {text(
               "orderSuccessPage.cryptoVerificationText",
-              "Send the exact order total on BNB Smart Chain. The backend confirms the transaction before the order moves to processing."
+              "Send the exact order total on BNB Smart Chain. The backend verifies the transaction before the order moves to processing."
             )}
           </p>
         </div>
