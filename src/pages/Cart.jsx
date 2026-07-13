@@ -1,5 +1,6 @@
 import { Trash2 } from "lucide-react";
 import { Link } from "react-router-dom";
+import ProductThumbnail from "../components/ProductThumbnail/ProductThumbnail";
 import { useLanguage } from "../i18n/LanguageContext";
 import { useCart } from "../context/CartContext";
 import "./Cart.css";
@@ -43,7 +44,7 @@ function Cart() {
             {cartItems.map((item) => (
               <article className="cartItem" key={item.key}>
                 <div className="cartItemImage">
-                  <span>{item.image}</span>
+                  <ProductThumbnail item={item} />
                 </div>
 
                 <div className="cartItemContent">
