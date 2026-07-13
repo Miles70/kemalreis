@@ -104,6 +104,21 @@ export async function updateAdminOrder(token, orderNumber, updates) {
   });
 }
 
+export async function deleteAdminOrder(token, orderNumber) {
+  return adminRequest(`/orders/${encodeURIComponent(orderNumber)}`, {
+    token,
+    method: "DELETE",
+  });
+}
+
+export async function deleteAdminOrders(token, orderNumbers) {
+  return adminRequest("/orders", {
+    token,
+    method: "DELETE",
+    body: { orderNumbers },
+  });
+}
+
 export async function getAdminProducts(token, { page = 1, limit = 20, search = "" } = {}) {
   const params = new URLSearchParams({
     page: String(page),
