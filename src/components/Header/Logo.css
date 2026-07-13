@@ -1,0 +1,171 @@
+.logo {
+  gap: 12px;
+  isolation: isolate;
+  transition:
+    transform var(--transition-fast),
+    filter var(--transition-fast);
+}
+
+.logo:hover {
+  transform: translateY(-1px);
+  filter: saturate(1.06);
+}
+
+.logoMark {
+  position: relative;
+  width: 40px;
+  height: 40px;
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 14px;
+  background:
+    radial-gradient(
+      circle at 28% 20%,
+      rgba(255, 255, 255, 0.58),
+      transparent 25%
+    ),
+    linear-gradient(
+      145deg,
+      #5f35e8 0%,
+      #9b2fd4 34%,
+      #e51c63 70%,
+      #ff527c 100%
+    );
+  color: #ffffff;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.46),
+    inset 0 -3px 8px rgba(77, 5, 54, 0.25),
+    0 9px 22px rgba(126, 43, 197, 0.22),
+    0 4px 12px rgba(240, 24, 96, 0.18);
+  transition:
+    transform var(--transition-fast),
+    box-shadow var(--transition-fast);
+}
+
+.logoMark::before {
+  content: "";
+  position: absolute;
+  inset: 2px;
+  border: 1px solid rgba(255, 255, 255, 0.27);
+  border-radius: 12px;
+  pointer-events: none;
+}
+
+.logoMark::after {
+  content: "";
+  position: absolute;
+  top: -15px;
+  left: -17px;
+  width: 16px;
+  height: 72px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.32),
+    transparent
+  );
+  transform: rotate(28deg);
+  transition: left 420ms ease;
+  pointer-events: none;
+}
+
+.logo:hover .logoMark {
+  transform: rotate(-3deg) scale(1.035);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.5),
+    inset 0 -3px 8px rgba(77, 5, 54, 0.22),
+    0 12px 27px rgba(126, 43, 197, 0.28),
+    0 6px 16px rgba(240, 24, 96, 0.22);
+}
+
+.logo:hover .logoMark::after {
+  left: 48px;
+}
+
+.logoGlyph {
+  position: relative;
+  z-index: 1;
+  width: 29px;
+  height: 29px;
+  overflow: visible;
+  color: #ffffff;
+  filter: drop-shadow(0 2px 3px rgba(66, 4, 45, 0.25));
+  transform: rotate(-2deg);
+}
+
+.logoGlyphStroke {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 6.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.logoGlyphDot {
+  fill: #ffd6e6;
+  filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.7));
+}
+
+.logoSpark {
+  position: absolute;
+  z-index: 2;
+  top: 6px;
+  right: 6px;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #ffffff;
+  box-shadow:
+    0 0 0 2px rgba(255, 255, 255, 0.13),
+    0 0 8px rgba(255, 255, 255, 0.9);
+}
+
+.logoText {
+  display: inline-flex;
+  align-items: baseline;
+  line-height: 1;
+  font-family:
+    ui-rounded,
+    "SF Pro Rounded",
+    "Arial Rounded MT Bold",
+    "Avenir Next",
+    "Trebuchet MS",
+    sans-serif;
+  font-size: 1.47rem;
+  font-weight: 950;
+  letter-spacing: -0.073em;
+  text-rendering: geometricPrecision;
+}
+
+.logoTextCore {
+  color: #11152b;
+}
+
+.logoTextAccent {
+  margin-left: 1px;
+  background: linear-gradient(135deg, #7138e8 0%, #c72592 42%, #f01860 100%);
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+  text-shadow: 0 5px 16px rgba(207, 31, 112, 0.12);
+}
+
+@media (max-width: 620px) {
+  .logo {
+    gap: 8px;
+  }
+
+  .logoMark {
+    width: 38px;
+    height: 38px;
+    border-radius: 13px;
+  }
+
+  .logoGlyph {
+    width: 27px;
+    height: 27px;
+  }
+}
