@@ -26,6 +26,29 @@ const orderItemSchema = new mongoose.Schema(
   { _id: false }
 );
 
+const paymentSchema = new mongoose.Schema(
+  {
+    provider: {
+      type: String,
+      enum: ["none", "onchain", "stripe"],
+      default: "none",
+    },
+    network: { type: String, trim: true, default: "" },
+    chainId: { type: Number, min: 1, default: null },
+    token: { type: String, trim: true, uppercase: true, default: "" },
+    tokenAddress: { type: String, trim: true, lowercase: true, default: "" },
+    payerAddress: { type: String, trim: true, lowercase: true, default: "" },
+    recipientAddress: { type: String, trim: true, lowercase: true, default: "" },
+    transactionHash: { type: String, trim: true, lowercase: true, default: "" },
+    amount: { type: String, trim: true, default: "" },
+    currency: { type: String, trim: true, uppercase: true, default: "" },
+    confirmedAt: { type: Date, default: null },
+    failedAt: { type: Date, default: null },
+    failureReason: { type: String, trim: true, default: "" },
+  },
+  { _id: false }
+);
+
 const orderSchema = new mongoose.Schema(
   {
     orderNumber: {
@@ -36,19 +59,32 @@ const orderSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ["pending", "processing", "shipped", "completed", "cancelled"],
-      default: "pending",
+      enum: [
+        "awaiting_payment",
+        "pending",
+        "processing",
+        "shipped",
+        "delivered",
+        "completed",
+        "cancelled",
+      ],
+      default: "awaiting_payment",
       index: true,
     },
     paymentStatus: {
       type: String,
       enum: ["unpaid", "pending", "paid", "failed", "refunded"],
       default: "unpaid",
+      index: true,
     },
     paymentMethod: {
       type: String,
       enum: ["not_selected", "card", "crypto"],
       default: "not_selected",
+    },
+    payment: {
+      type: paymentSchema,
+      default: () => ({}),
     },
     customer: {
       type: customerSchema,
