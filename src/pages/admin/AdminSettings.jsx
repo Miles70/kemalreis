@@ -1,4 +1,5 @@
 import { KeyRound, Server, ShieldCheck } from "lucide-react";
+import AdminCampaignSettings from "../../components/admin/AdminCampaignSettings";
 import { useAdminAuth } from "../../context/AdminAuthContext";
 
 function AdminSettings() {
@@ -10,7 +11,7 @@ function AdminSettings() {
         <div>
           <p className="admin-eyebrow">SİSTEM</p>
           <h1>Ayarlar</h1>
-          <p>Admin erişimi ve backend bağlantısının temel yapılandırması.</p>
+          <p>Admin erişimini, backend bağlantısını ve mağaza kampanyalarını yönet.</p>
         </div>
       </div>
 
@@ -43,6 +44,8 @@ function AdminSettings() {
           </div>
         </section>
       </div>
+
+      <AdminCampaignSettings />
     </div>
   );
 }
