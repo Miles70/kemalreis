@@ -5,6 +5,7 @@ import { Product } from "../models/Product.js";
 
 const CAMPAIGN_KEY = "home-main";
 const MAX_PRODUCT_KEYS = 3;
+const MAX_CATEGORY_SLIDES = 3;
 
 const defaults = {
   key: CAMPAIGN_KEY,
@@ -52,6 +53,16 @@ function normalizeDate(value, fieldName) {
   return date;
 }
 
+function formatCategoryLabel(value) {
+  const label = cleanText(value, 90);
+  if (!label) return "Trending picks";
+
+  return label
+    .replace(/[-_]+/g, " ")
+    .replace(/\s+/g, " ")
+    .replace(/\b\w/g, (letter) => letter.toUpperCase());
+}
+
 async function getCampaign() {
   return HomeCampaign.findOneAndUpdate(
     { key: CAMPAIGN_KEY },
@@ -78,6 +89,67 @@ async function getCampaignProducts(productKeys = []) {
     .lean();
 }
 
+async function getCategorySlides(excludedProductKeys = []) {
+  const categoryGroups = await Product.aggregate([
+    {
+      $match: {
+        isActive: true,
+        categoryKey: { $nin: ["", null] },
+        $or: [{ imageUrl: { $ne: "" } }, { images: { $exists: true, $ne: [] } }],
+      },
+    },
+    {
+      $group: {
+        _id: "$categoryKey",
+        label: { $first: "$categoryLabel" },
+        count: { $sum: 1 },
+        popularity: { $sum: { $ifNull: ["$popularity", 0] } },
+      },
+    },
+    { $sort: { popularity: -1, count: -1, _id: 1 } },
+    { $limit: 12 },
+  ]);
+
+  const slides = [];
+  const usedProductKeys = new Set(excludedProductKeys);
+  const themes = ["electric", "sunset", "midnight"];
+
+  for (const category of categoryGroups) {
+    if (slides.length >= MAX_CATEGORY_SLIDES) break;
+
+    const products = await Product.find({
+      isActive: true,
+      categoryKey: category._id,
+      key: { $nin: [...usedProductKeys] },
+      $or: [{ imageUrl: { $ne: "" } }, { images: { $exists: true, $ne: [] } }],
+    })
+      .sort({ popularity: -1, rating: -1, createdAt: -1 })
+      .limit(MAX_PRODUCT_KEYS)
+      .lean();
+
+    if (products.length === 0) continue;
+
+    products.forEach((product) => usedProductKeys.add(product.key));
+
+    const categoryLabel = formatCategoryLabel(category.label || category._id);
+    const heroImage = products[0]?.imageUrl || products[0]?.images?.[0] || "";
+
+    slides.push({
+      id: `category-${category._id}`,
+      theme: themes[slides.length % themes.length],
+      eyebrow: "CATEGORY SPOTLIGHT",
+      title: categoryLabel,
+      description: `Fresh ${categoryLabel.toLowerCase()} picks selected from the Gabaloo catalog.`,
+      buttonLabel: "Shop category",
+      buttonUrl: `/products?category=${encodeURIComponent(category._id)}`,
+      backgroundImageUrl: heroImage,
+      products: products.map(serializeProduct),
+    });
+  }
+
+  return slides;
+}
+
 function serializeProduct(product) {
   return {
     key: product.key,
@@ -101,10 +173,26 @@ function isCampaignVisible(campaign) {
 
 async function serializeCampaign(campaign) {
   const products = await getCampaignProducts(campaign.productKeys || []);
+  const serializedProducts = products.map(serializeProduct);
+  const categorySlides = await getCategorySlides(products.map((product) => product.key));
+
+  const mainSlide = {
+    id: "main-campaign",
+    theme: "signature",
+    eyebrow: campaign.eyebrow,
+    title: campaign.title,
+    description: campaign.description,
+    buttonLabel: campaign.buttonLabel,
+    buttonUrl: campaign.buttonUrl,
+    backgroundImageUrl: campaign.backgroundImageUrl,
+    products: serializedProducts,
+  };
 
   return {
     ...campaign,
-    products: products.map(serializeProduct),
+    products: serializedProducts,
+    slides: [mainSlide, ...categorySlides],
+    slideIntervalMs: 5500,
   };
 }
 
