@@ -4,6 +4,14 @@ import { useLanguage } from "../i18n/LanguageContext";
 import CryptoPayment from "../components/CryptoPayment/CryptoPayment";
 import "./OrderSuccess.css";
 
+const DATE_LOCALES = {
+  en: "en-US",
+  tr: "tr-TR",
+  ru: "ru-RU",
+  ar: "ar",
+  zh: "zh-CN",
+};
+
 function safeParse(value, fallback) {
   try {
     return value ? JSON.parse(value) : fallback;
@@ -17,7 +25,7 @@ function getLastOrder() {
 }
 
 function OrderSuccess() {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const [order, setOrder] = useState(getLastOrder);
 
   const text = (key, fallback) => {
@@ -66,10 +74,13 @@ function OrderSuccess() {
   }
 
   const createdDate = order.createdAt
-    ? new Date(order.createdAt).toLocaleString(undefined, {
-        dateStyle: "medium",
-        timeStyle: "short",
-      })
+    ? new Date(order.createdAt).toLocaleString(
+        DATE_LOCALES[language] || DATE_LOCALES.en,
+        {
+          dateStyle: "medium",
+          timeStyle: "short",
+        }
+      )
     : text("orderSuccessPage.justNow", "Just now");
 
   const isPaid = order.paymentStatus === "paid";
