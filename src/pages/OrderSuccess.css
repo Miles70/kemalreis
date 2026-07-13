@@ -61,7 +61,7 @@
 .orderSuccessMeta {
   margin-top: 27px;
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
   gap: 13px;
 }
 
@@ -87,6 +87,27 @@
   overflow-wrap: anywhere;
   color: var(--color-text);
   font-size: 14px;
+}
+
+.orderSuccessPaymentNotice {
+  margin-top: 18px;
+  padding: 17px 18px;
+  border: 1px solid rgba(79, 99, 236, 0.2);
+  border-radius: 17px;
+  background: rgba(79, 99, 236, 0.07);
+}
+
+.orderSuccessPaymentNotice strong {
+  display: block;
+  color: var(--color-secondary);
+  font-size: 15px;
+}
+
+.orderSuccessPaymentNotice p {
+  margin: 6px 0 0;
+  color: var(--color-text-secondary);
+  font-size: 13px;
+  line-height: 1.6;
 }
 
 .orderSuccessDetails,
