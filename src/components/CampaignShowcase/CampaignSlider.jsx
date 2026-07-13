@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ArrowRight, ChevronLeft, ChevronRight, Sparkles } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useLanguage } from "../../i18n/LanguageContext";
@@ -6,6 +6,7 @@ import campaignTranslations from "../../i18n/campaignTranslations";
 import "./CampaignSlider.css";
 
 const FALLBACK_INTERVAL = 5500;
+const TRANSITION_DURATION = 1350;
 const localeByLanguage = {
   en: "en-US",
   tr: "tr-TR",
@@ -47,7 +48,7 @@ function localizeSlide(slide, dictionary) {
   };
 }
 
-function SlideButton({ slide }) {
+function SlideButton({ slide, tabIndex }) {
   const content = (
     <>
       {slide.buttonLabel}
@@ -62,6 +63,7 @@ function SlideButton({ slide }) {
         href={slide.buttonUrl}
         target="_blank"
         rel="noreferrer"
+        tabIndex={tabIndex}
       >
         {content}
       </a>
@@ -69,7 +71,11 @@ function SlideButton({ slide }) {
   }
 
   return (
-    <Link className="campaignShowcaseButton" to={slide.buttonUrl || "/products"}>
+    <Link
+      className="campaignShowcaseButton"
+      to={slide.buttonUrl || "/products"}
+      tabIndex={tabIndex}
+    >
       {content}
     </Link>
   );
@@ -84,8 +90,10 @@ function CampaignSlider({ campaign }) {
     [dictionary, rawSlides],
   );
   const [activeIndex, setActiveIndex] = useState(0);
+  const [previousIndex, setPreviousIndex] = useState(null);
   const [direction, setDirection] = useState(1);
   const [paused, setPaused] = useState(false);
+  const transitionTimerRef = useRef(null);
 
   const formatMoney = useCallback(
     (value, currency = "USD") =>
@@ -99,19 +107,32 @@ function CampaignSlider({ campaign }) {
   const moveTo = useCallback(
     (index, nextDirection = 1) => {
       const normalized = (index + slides.length) % slides.length;
+      if (normalized === activeIndex) return;
+
+      if (transitionTimerRef.current) {
+        window.clearTimeout(transitionTimerRef.current);
+      }
+
+      setPreviousIndex(activeIndex);
       setDirection(nextDirection);
       setActiveIndex(normalized);
+
+      transitionTimerRef.current = window.setTimeout(() => {
+        setPreviousIndex(null);
+        transitionTimerRef.current = null;
+      }, TRANSITION_DURATION);
     },
-    [slides.length],
+    [activeIndex, slides.length],
   );
 
   useEffect(() => {
     if (activeIndex < slides.length) return;
     setActiveIndex(0);
+    setPreviousIndex(null);
   }, [activeIndex, slides.length]);
 
   useEffect(() => {
-    if (slides.length < 2 || paused) return undefined;
+    if (slides.length < 2 || paused || previousIndex !== null) return undefined;
 
     const timer = window.setTimeout(
       () => moveTo(activeIndex + 1, 1),
@@ -119,71 +140,84 @@ function CampaignSlider({ campaign }) {
     );
 
     return () => window.clearTimeout(timer);
-  }, [activeIndex, campaign.slideIntervalMs, moveTo, paused, slides.length]);
+  }, [activeIndex, campaign.slideIntervalMs, moveTo, paused, previousIndex, slides.length]);
 
-  const slide = slides[activeIndex] || slides[0];
-  const backgroundStyle = slide.backgroundImageUrl
-    ? {
-        backgroundImage: `linear-gradient(105deg, rgba(30,4,34,.97), rgba(102,15,76,.9), rgba(43,20,91,.86)), url("${slide.backgroundImageUrl}")`,
+  useEffect(
+    () => () => {
+      if (transitionTimerRef.current) {
+        window.clearTimeout(transitionTimerRef.current);
       }
-    : undefined;
+    },
+    [],
+  );
 
   return (
     <section
-      className={`campaignShowcase campaignShowcase--${slide.theme || "signature"}`}
+      className={`campaignShowcase campaignShowcase--cinematic campaignShowcase--${direction > 0 ? "forward" : "backward"}`}
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
       aria-label={dictionary.campaignSlider.campaignsLabel}
     >
-      <div
-        className="campaignShowcaseBackdrop"
-        key={`background-${slide.id || activeIndex}`}
-        style={backgroundStyle}
-      />
-      <div className="campaignShowcaseGlow campaignShowcaseGlowOne" />
-      <div className="campaignShowcaseGlow campaignShowcaseGlowTwo" />
+      {slides.map((slide, slideIndex) => {
+        const isActive = slideIndex === activeIndex;
+        const isPrevious = slideIndex === previousIndex;
+        const sceneState = isActive ? "active" : isPrevious ? "previous" : "hidden";
 
-      <div
-        className={`campaignShowcaseInner campaignSlideEnter campaignSlideEnter--${direction > 0 ? "next" : "previous"}`}
-        key={slide.id || activeIndex}
-      >
-        <div className="campaignShowcaseContent">
-          <p className="campaignShowcaseEyebrow">
-            <Sparkles size={16} /> {slide.eyebrow}
-          </p>
-          <h2>{slide.title}</h2>
-          <p className="campaignShowcaseDescription">{slide.description}</p>
-          <SlideButton slide={slide} />
-        </div>
+        return (
+          <article
+            className={`campaignScene campaignScene--${slide.theme || "signature"} campaignScene--${sceneState}`}
+            aria-hidden={!isActive}
+            key={slide.id || slideIndex}
+          >
+            {slide.backgroundImageUrl ? (
+              <img className="campaignSceneBackdrop" src={slide.backgroundImageUrl} alt="" />
+            ) : null}
+            <div className="campaignSceneVeil" />
+            <div className="campaignSceneLight campaignSceneLightOne" />
+            <div className="campaignSceneLight campaignSceneLightTwo" />
 
-        <div className="campaignProductRail">
-          {(slide.products || []).slice(0, 3).map((product, index) => (
-            <Link
-              className="campaignProductCard"
-              to={`/products/${encodeURIComponent(product.key)}`}
-              key={product.key}
-              style={{ "--campaign-card-index": index }}
-            >
-              <div className="campaignProductImage">
-                {product.imageUrl ? (
-                  <img src={product.imageUrl} alt={product.title} loading="lazy" />
-                ) : (
-                  <span>{product.image || "🛍️"}</span>
-                )}
+            <div className="campaignShowcaseInner campaignSceneInner">
+              <div className="campaignShowcaseContent campaignSceneContent">
+                <p className="campaignShowcaseEyebrow">
+                  <Sparkles size={16} /> {slide.eyebrow}
+                </p>
+                <h2>{slide.title}</h2>
+                <p className="campaignShowcaseDescription">{slide.description}</p>
+                <SlideButton slide={slide} tabIndex={isActive ? 0 : -1} />
               </div>
-              <div className="campaignProductMeta">
-                <strong>{product.title}</strong>
-                <div className="campaignProductPrice">
-                  <span>{formatMoney(product.price, product.currency)}</span>
-                  {product.oldPrice ? (
-                    <del>{formatMoney(product.oldPrice, product.currency)}</del>
-                  ) : null}
-                </div>
+
+              <div className="campaignProductRail campaignSceneProducts">
+                {(slide.products || []).slice(0, 3).map((product, index) => (
+                  <Link
+                    className="campaignProductCard"
+                    to={`/products/${encodeURIComponent(product.key)}`}
+                    key={product.key}
+                    style={{ "--campaign-card-index": index }}
+                    tabIndex={isActive ? 0 : -1}
+                  >
+                    <div className="campaignProductImage">
+                      {product.imageUrl ? (
+                        <img src={product.imageUrl} alt={product.title} loading="lazy" />
+                      ) : (
+                        <span>{product.image || "🛍️"}</span>
+                      )}
+                    </div>
+                    <div className="campaignProductMeta">
+                      <strong>{product.title}</strong>
+                      <div className="campaignProductPrice">
+                        <span>{formatMoney(product.price, product.currency)}</span>
+                        {product.oldPrice ? (
+                          <del>{formatMoney(product.oldPrice, product.currency)}</del>
+                        ) : null}
+                      </div>
+                    </div>
+                  </Link>
+                ))}
               </div>
-            </Link>
-          ))}
-        </div>
-      </div>
+            </div>
+          </article>
+        );
+      })}
 
       {slides.length > 1 ? (
         <div className="campaignCarouselControls">
