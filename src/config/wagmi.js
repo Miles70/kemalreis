@@ -39,6 +39,6 @@ export const appKit = createAppKit({
   features: {
     analytics: true,
     email: false,
-    socials: [],
+    socials: ["google", "apple", "facebook"],
   },
 });
