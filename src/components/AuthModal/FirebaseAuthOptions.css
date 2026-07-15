@@ -1,0 +1,37 @@
+.customerAuthOption.unavailable {
+  cursor: not-allowed;
+  filter: grayscale(0.22);
+  opacity: 0.58;
+}
+
+.customerAuthOption.unavailable:hover {
+  transform: none;
+}
+
+.customerAuthOptionStatus {
+  position: absolute;
+  right: 14px;
+  padding: 4px 7px;
+  border: 1px solid rgba(90, 92, 112, 0.15);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.76);
+  color: #77798b;
+  font-size: 9px;
+  font-style: normal;
+  font-weight: 900;
+  letter-spacing: 0.03em;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.customerAuthOption--apple .customerAuthOptionStatus {
+  border-color: rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.12);
+  color: rgba(255, 255, 255, 0.78);
+}
+
+@media (max-width: 520px) {
+  .customerAuthOptionStatus {
+    display: none;
+  }
+}
