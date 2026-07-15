@@ -1,16 +1,17 @@
 import { useEffect } from "react";
 import {
-  CheckCircle2,
+  LayoutDashboard,
   LogOut,
-  Settings2,
   ShieldCheck,
   UserRound,
   WalletCards,
   X,
 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { FaApple, FaFacebookF } from "react-icons/fa";
 import { FcGoogle } from "react-icons/fc";
 
+import CustomerAvatar from "../CustomerAvatar/CustomerAvatar";
 import { useCustomerAuth } from "../../context/CustomerAuthContext";
 import { useLanguage } from "../../i18n/LanguageContext";
 
@@ -25,6 +26,7 @@ function shortenAddress(address) {
 }
 
 function AuthModal() {
+  const navigate = useNavigate();
   const { t } = useLanguage();
   const {
     address,
@@ -38,7 +40,6 @@ function AuthModal() {
     isAuthenticated,
     isConnected,
     isGuest,
-    manageWallet,
     profileEmail,
     signOut,
     startSocialLogin,
@@ -74,6 +75,11 @@ function AuthModal() {
 
   const methodLabel = authType ? t(`auth.method.${authType}`) : "";
   const visibleName = isGuest ? t("auth.method.guest") : displayName;
+
+  function openAccountDashboard() {
+    closeAuthModal();
+    navigate("/account");
+  }
 
   return (
     <div
@@ -195,7 +201,7 @@ function AuthModal() {
         ) : (
           <>
             <div className="customerAuthProfileIcon" aria-hidden="true">
-              {isGuest ? <UserRound size={30} /> : <CheckCircle2 size={31} />}
+              <CustomerAvatar size="large" />
             </div>
 
             <div className="customerAuthHeading customerAuthHeading--profile">
@@ -209,9 +215,7 @@ function AuthModal() {
             </div>
 
             <div className="customerAuthProfileCard">
-              <div className="customerAuthAvatar">
-                <UserRound size={22} />
-              </div>
+              <CustomerAvatar size="medium" />
 
               <div className="customerAuthProfileCopy">
                 <strong>{visibleName}</strong>
@@ -244,10 +248,10 @@ function AuthModal() {
                 <button
                   type="button"
                   className="customerAuthPrimaryAction"
-                  onClick={manageWallet}
+                  onClick={openAccountDashboard}
                 >
-                  <Settings2 size={18} />
-                  {t("auth.manageWallet")}
+                  <LayoutDashboard size={18} />
+                  {t("account.accountHome")}
                 </button>
               )}
 
