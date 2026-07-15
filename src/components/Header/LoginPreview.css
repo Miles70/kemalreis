@@ -1,0 +1,131 @@
+.customerLoginPreview {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  z-index: 145;
+  width: min(292px, calc(100vw - 24px));
+  padding: 9px;
+  display: grid;
+  gap: 5px;
+  border: 1px solid rgba(82, 91, 121, 0.16);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.98);
+  box-shadow: 0 22px 58px rgba(23, 31, 58, 0.2);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transform: translateY(-7px) scale(0.985);
+  transform-origin: top right;
+  transition:
+    opacity 150ms ease,
+    visibility 150ms ease,
+    transform 150ms ease;
+}
+
+.customerLoginPreview::before {
+  content: "";
+  position: absolute;
+  top: -12px;
+  right: 0;
+  left: 0;
+  height: 12px;
+}
+
+.customerLoginPreview::after {
+  content: "";
+  position: absolute;
+  top: -7px;
+  right: 34px;
+  width: 14px;
+  height: 14px;
+  border-top: 1px solid rgba(82, 91, 121, 0.16);
+  border-left: 1px solid rgba(82, 91, 121, 0.16);
+  background: #ffffff;
+  transform: rotate(45deg);
+}
+
+.customerAccountControl:hover .customerLoginPreview,
+.customerAccountControl:focus-within .customerLoginPreview {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transform: translateY(0) scale(1);
+}
+
+.customerLoginPreview button {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  min-height: 44px;
+  padding: 0 12px;
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
+  color: var(--color-text-secondary);
+  font-size: 12px;
+  font-weight: 800;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    background var(--transition-fast),
+    color var(--transition-fast),
+    transform var(--transition-fast);
+}
+
+.customerLoginPreview button:hover:not(:disabled),
+.customerLoginPreview button:focus-visible:not(:disabled) {
+  background: #f4f5f8;
+  color: var(--color-text);
+  transform: translateX(2px);
+}
+
+.customerLoginPreview button:disabled {
+  cursor: wait;
+  opacity: 0.55;
+}
+
+.customerLoginPreviewIcon {
+  width: 30px;
+  height: 30px;
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(36, 46, 72, 0.08);
+  border-radius: 9px;
+  background: #ffffff;
+  box-shadow: 0 4px 12px rgba(30, 40, 80, 0.07);
+}
+
+.customerLoginPreviewIcon--facebook {
+  border-color: #1877f2;
+  background: #1877f2;
+  color: #ffffff;
+}
+
+.customerLoginPreviewIcon--wallet {
+  border-color: rgba(91, 77, 255, 0.16);
+  background: #f2f0ff;
+  color: #5b4dff;
+}
+
+.customerLoginPreviewIcon--guest {
+  background: #f1f3f7;
+  color: #4c5264;
+}
+
+@media (max-width: 620px) {
+  .customerLoginPreview {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .customerLoginPreview {
+    transition-duration: 1ms !important;
+  }
+}
