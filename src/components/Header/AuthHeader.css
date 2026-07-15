@@ -1,0 +1,111 @@
+.customerHeaderAuthButton {
+  position: relative;
+  min-width: 122px;
+  max-width: 190px;
+  min-height: 42px;
+  padding: 0 15px 0 11px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 1px solid var(--color-primary);
+  border-radius: 999px;
+  background: var(--color-primary);
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 850;
+  white-space: nowrap;
+  box-shadow: 0 10px 24px var(--color-primary-shadow);
+  transition:
+    background var(--transition-fast),
+    border-color var(--transition-fast),
+    color var(--transition-fast),
+    box-shadow var(--transition-fast),
+    transform var(--transition-fast);
+}
+
+.customerHeaderAuthButton:hover {
+  border-color: var(--color-primary-hover);
+  background: var(--color-primary-hover);
+  box-shadow: 0 14px 30px rgba(240, 24, 96, 0.3);
+  transform: translateY(-1px);
+}
+
+.customerHeaderAuthButton:active {
+  transform: translateY(0);
+}
+
+.customerHeaderAuthButton--active {
+  border-color: rgba(37, 168, 107, 0.3);
+  background: linear-gradient(135deg, #1d9967, #3b6fd8);
+  box-shadow: 0 10px 24px rgba(35, 120, 113, 0.2);
+}
+
+.customerHeaderAuthButton--active:hover {
+  border-color: rgba(31, 142, 91, 0.45);
+  background: linear-gradient(135deg, #17865a, #315fc0);
+  box-shadow: 0 14px 30px rgba(35, 120, 113, 0.26);
+}
+
+.customerHeaderAuthButton--guest {
+  border-color: rgba(95, 85, 181, 0.25);
+  background: linear-gradient(135deg, #6a5fd0, #e23b74);
+  box-shadow: 0 10px 24px rgba(106, 74, 158, 0.2);
+}
+
+.customerHeaderAuthIcon {
+  width: 27px;
+  height: 27px;
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  border-radius: 9px;
+  background: rgba(255, 255, 255, 0.14);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.14);
+}
+
+.customerHeaderAuthText {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.customerHeaderAuthStatus {
+  position: absolute;
+  top: 5px;
+  right: 7px;
+  width: 7px;
+  height: 7px;
+  border: 2px solid #ffffff;
+  border-radius: 50%;
+  background: #34d399;
+  box-sizing: content-box;
+}
+
+@media (max-width: 1000px) {
+  .customerHeaderAuthButton {
+    min-width: 108px;
+    max-width: 155px;
+    padding-inline: 10px 13px;
+  }
+}
+
+@media (max-width: 620px) {
+  .customerHeaderAuthButton {
+    width: 40px;
+    min-width: 40px;
+    max-width: 40px;
+    min-height: 40px;
+    padding: 0;
+  }
+
+  .customerHeaderAuthText {
+    display: none;
+  }
+
+  .customerHeaderAuthStatus {
+    top: -3px;
+    right: -3px;
+  }
+}
