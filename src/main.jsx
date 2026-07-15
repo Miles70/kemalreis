@@ -7,6 +7,7 @@ import "./utils/orderStorage";
 import { LanguageProvider } from "./i18n/LanguageContext";
 import { CartProvider } from "./context/CartContext";
 import { CustomerAuthProvider } from "./context/CustomerAuthContext";
+import { CustomerAccountProvider } from "./context/CustomerAccountContext";
 import { AdminAuthProvider } from "./context/AdminAuthContext";
 import { wagmiAdapter } from "./config/wagmi";
 
@@ -21,11 +22,13 @@ createRoot(document.getElementById("root")).render(
       <BrowserRouter>
         <LanguageProvider>
           <CustomerAuthProvider>
-            <CartProvider>
-              <AdminAuthProvider>
-                <App />
-              </AdminAuthProvider>
-            </CartProvider>
+            <CustomerAccountProvider>
+              <CartProvider>
+                <AdminAuthProvider>
+                  <App />
+                </AdminAuthProvider>
+              </CartProvider>
+            </CustomerAccountProvider>
           </CustomerAuthProvider>
         </LanguageProvider>
       </BrowserRouter>
