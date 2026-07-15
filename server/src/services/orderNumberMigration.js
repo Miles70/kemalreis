@@ -1,24 +1,39 @@
 import { Order } from "../models/Order.js";
 
-const LEGACY_PREFIX = "KMR-";
+const LEGACY_PREFIXES = ["KMR-", "GBL-"];
 const CURRENT_PREFIX = "MTR-";
+
+function getOrderSuffix(orderNumber, prefix) {
+  return orderNumber.slice(prefix.length);
+}
 
 export function getCompatibleOrderNumbers(value) {
   const orderNumber = String(value || "").trim().toUpperCase();
 
   if (!orderNumber) return [];
 
-  if (orderNumber.startsWith(LEGACY_PREFIX)) {
+  const matchedLegacyPrefix = LEGACY_PREFIXES.find((prefix) =>
+    orderNumber.startsWith(prefix),
+  );
+
+  if (matchedLegacyPrefix) {
+    const suffix = getOrderSuffix(orderNumber, matchedLegacyPrefix);
+
     return [
       orderNumber,
-      `${CURRENT_PREFIX}${orderNumber.slice(LEGACY_PREFIX.length)}`,
+      `${CURRENT_PREFIX}${suffix}`,
+      ...LEGACY_PREFIXES.filter((prefix) => prefix !== matchedLegacyPrefix).map(
+        (prefix) => `${prefix}${suffix}`,
+      ),
     ];
   }
 
   if (orderNumber.startsWith(CURRENT_PREFIX)) {
+    const suffix = getOrderSuffix(orderNumber, CURRENT_PREFIX);
+
     return [
       orderNumber,
-      `${LEGACY_PREFIX}${orderNumber.slice(CURRENT_PREFIX.length)}`,
+      ...LEGACY_PREFIXES.map((prefix) => `${prefix}${suffix}`),
     ];
   }
 
@@ -27,7 +42,7 @@ export function getCompatibleOrderNumbers(value) {
 
 export async function migrateLegacyOrderNumbers() {
   const legacyOrders = await Order.find({
-    orderNumber: /^KMR-/i,
+    orderNumber: /^(KMR|GBL)-/i,
   })
     .select({ _id: 1, orderNumber: 1 })
     .lean();
@@ -41,7 +56,7 @@ export async function migrateLegacyOrderNumbers() {
 
   for (const order of legacyOrders) {
     const currentOrderNumber = String(order.orderNumber || "").replace(
-      /^KMR-/i,
+      /^(KMR|GBL)-/i,
       CURRENT_PREFIX,
     );
 
