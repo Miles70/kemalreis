@@ -21,9 +21,7 @@ const authLimiter = rateLimit({
   message: { message: "Too many sign-in attempts. Please try again later." },
 });
 
-customerAuthRouter.use(authLimiter);
-
-customerAuthRouter.post("/firebase", async (request, response, next) => {
+customerAuthRouter.post("/firebase", authLimiter, async (request, response, next) => {
   try {
     const session = await createFirebaseCustomerSession(request.body?.idToken);
     response.status(201).json({ session });
@@ -32,7 +30,7 @@ customerAuthRouter.post("/firebase", async (request, response, next) => {
   }
 });
 
-customerAuthRouter.post("/guest", async (request, response, next) => {
+customerAuthRouter.post("/guest", authLimiter, async (request, response, next) => {
   try {
     const session = await createGuestCustomerSession(request.body?.guestId);
     response.status(201).json({ session });
@@ -41,16 +39,20 @@ customerAuthRouter.post("/guest", async (request, response, next) => {
   }
 });
 
-customerAuthRouter.post("/wallet/challenge", async (request, response, next) => {
-  try {
-    const challenge = await createWalletChallenge(request.body?.address);
-    response.status(201).json({ challenge });
-  } catch (error) {
-    next(error);
-  }
-});
+customerAuthRouter.post(
+  "/wallet/challenge",
+  authLimiter,
+  async (request, response, next) => {
+    try {
+      const challenge = await createWalletChallenge(request.body?.address);
+      response.status(201).json({ challenge });
+    } catch (error) {
+      next(error);
+    }
+  },
+);
 
-customerAuthRouter.post("/wallet", async (request, response, next) => {
+customerAuthRouter.post("/wallet", authLimiter, async (request, response, next) => {
   try {
     const session = await createWalletCustomerSession({
       address: request.body?.address,
