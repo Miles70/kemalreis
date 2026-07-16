@@ -1,5 +1,6 @@
 import { Router } from "express";
 import rateLimit from "express-rate-limit";
+import { optionalCustomer } from "../middleware/customerAuth.js";
 import { Order } from "../models/Order.js";
 import { getCompatibleOrderNumbers } from "../services/orderNumberMigration.js";
 import { createOrder, serializeOrder } from "../services/orderService.js";
@@ -23,14 +24,27 @@ const verifyPaymentLimiter = rateLimit({
   message: { message: "Too many payment checks. Please try again later." },
 });
 
-ordersRouter.post("/", createOrderLimiter, async (request, response, next) => {
-  try {
-    const order = await createOrder(request.body);
-    response.status(201).json({ order });
-  } catch (error) {
-    next(error);
-  }
-});
+ordersRouter.post(
+  "/",
+  createOrderLimiter,
+  optionalCustomer,
+  async (request, response, next) => {
+    try {
+      const order = await createOrder(request.body);
+
+      if (request.customer) {
+        await Order.updateOne(
+          { _id: order.databaseId },
+          { $set: { customerAccount: request.customer._id } },
+        );
+      }
+
+      response.status(201).json({ order });
+    } catch (error) {
+      next(error);
+    }
+  },
+);
 
 ordersRouter.post(
   "/:orderNumber/verify-payment",
@@ -39,7 +53,7 @@ ordersRouter.post(
     try {
       const email = String(request.body?.email || "").trim().toLowerCase();
       const transactionHash = String(
-        request.body?.transactionHash || ""
+        request.body?.transactionHash || "",
       ).trim();
       const payerAddress = String(request.body?.payerAddress || "").trim();
 
@@ -74,7 +88,7 @@ ordersRouter.post(
     } catch (error) {
       return next(error);
     }
-  }
+  },
 );
 
 ordersRouter.get("/:orderNumber", async (request, response, next) => {
