@@ -3,14 +3,14 @@ import { Product } from "../models/Product.js";
 
 export const productsRouter = Router();
 
-const QUALITY_SOURCE = "amazon-reviews-2023";
+const STOREFRONT_SOURCES = ["amazon-reviews-2023", "manual"];
 
 productsRouter.get("/", async (request, response, next) => {
   try {
     const category = String(request.query.category || "").trim();
     const filter = {
       isActive: true,
-      source: QUALITY_SOURCE,
+      source: { $in: STOREFRONT_SOURCES },
     };
 
     if (category) {
@@ -33,7 +33,7 @@ productsRouter.get("/:productKey", async (request, response, next) => {
     const product = await Product.findOne({
       key: request.params.productKey,
       isActive: true,
-      source: QUALITY_SOURCE,
+      source: { $in: STOREFRONT_SOURCES },
     }).lean();
 
     if (!product) {
