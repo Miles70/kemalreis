@@ -1,4 +1,5 @@
 import crypto from "node:crypto";
+import mongoose from "mongoose";
 import { getPublicCryptoPaymentConfig } from "../config/cryptoPayment.js";
 import { Order } from "../models/Order.js";
 import { Product } from "../models/Product.js";
@@ -6,9 +7,24 @@ import { Product } from "../models/Product.js";
 const MAX_ORDER_ITEMS = 50;
 const MAX_ITEM_QUANTITY = 10;
 const PAYMENT_METHODS = new Set(["not_selected", "card", "crypto"]);
+const DEFAULT_PAYMENT_TTL_MINUTES = 30;
 
 function cleanText(value, maxLength) {
   return String(value || "").trim().slice(0, maxLength);
+}
+
+function parsePositiveInteger(value, fallback) {
+  const parsed = Number.parseInt(value, 10);
+  return Number.isInteger(parsed) && parsed > 0 ? parsed : fallback;
+}
+
+function getReservationExpiresAt() {
+  const ttlMinutes = parsePositiveInteger(
+    process.env.ORDER_PAYMENT_TTL_MINUTES,
+    DEFAULT_PAYMENT_TTL_MINUTES
+  );
+
+  return new Date(Date.now() + ttlMinutes * 60 * 1000);
 }
 
 function normalizeCustomer(customer = {}) {
@@ -131,6 +147,16 @@ function getPaymentData(paymentMethod, total) {
   };
 }
 
+function createAvailabilityError(productKey, product) {
+  const error = new Error(
+    product
+      ? `Not enough stock for ${product.title}.`
+      : `Product is unavailable: ${productKey}`
+  );
+  error.statusCode = 409;
+  return error;
+}
+
 export function serializeOrder(orderDocument) {
   const order = orderDocument.toObject ? orderDocument.toObject() : orderDocument;
   const payment = order.payment || {};
@@ -162,6 +188,8 @@ export function serializeOrder(orderDocument) {
       failedAt: payment.failedAt || null,
       failureReason: payment.failureReason || "",
     },
+    reservationExpiresAt: order.reservationExpiresAt || null,
+    stockReserved: Boolean(order.stockReserved),
     createdAt: order.createdAt,
     updatedAt: order.updatedAt,
     customer: order.customer,
@@ -186,64 +214,86 @@ export async function createOrder(payload = {}) {
   const customer = normalizeCustomer(payload.customer);
   const paymentMethod = normalizePaymentMethod(payload.paymentMethod);
   const requestedItems = normalizeRequestedItems(payload.items);
-  const productKeys = requestedItems.map((item) => item.productKey);
+  const session = await mongoose.startSession();
+  let createdOrder = null;
 
-  const products = await Product.find({
-    key: { $in: productKeys },
-    isActive: true,
-  }).lean();
+  try {
+    await session.withTransaction(async () => {
+      const orderItems = [];
 
-  const productsByKey = new Map(products.map((product) => [product.key, product]));
+      for (const { productKey, quantity } of requestedItems) {
+        const product = await Product.findOneAndUpdate(
+          {
+            key: productKey,
+            isActive: true,
+            stock: { $gte: quantity },
+          },
+          {
+            $inc: { stock: -quantity },
+          },
+          {
+            new: true,
+            session,
+          }
+        ).lean();
 
-  const orderItems = requestedItems.map(({ productKey, quantity }) => {
-    const product = productsByKey.get(productKey);
+        if (!product) {
+          const availableProduct = await Product.findOne({
+            key: productKey,
+            isActive: true,
+          })
+            .session(session)
+            .lean();
 
-    if (!product) {
-      const error = new Error(`Product is unavailable: ${productKey}`);
-      error.statusCode = 409;
-      throw error;
-    }
+          throw createAvailabilityError(productKey, availableProduct);
+        }
 
-    if (product.stock < quantity) {
-      const error = new Error(`Not enough stock for ${product.title}.`);
-      error.statusCode = 409;
-      throw error;
-    }
+        const unitPrice = Number(product.price);
+        const lineTotal = Number((unitPrice * quantity).toFixed(2));
 
-    const unitPrice = Number(product.price);
-    const lineTotal = Number((unitPrice * quantity).toFixed(2));
+        orderItems.push({
+          productKey: product.key,
+          title: product.title,
+          categoryKey: product.categoryKey,
+          image: product.image,
+          imageUrl: product.imageUrl,
+          unitPrice,
+          quantity,
+          lineTotal,
+        });
+      }
 
-    return {
-      productKey: product.key,
-      title: product.title,
-      categoryKey: product.categoryKey,
-      image: product.image,
-      imageUrl: product.imageUrl,
-      unitPrice,
-      quantity,
-      lineTotal,
-    };
-  });
+      const subtotal = Number(
+        orderItems.reduce((sum, item) => sum + item.lineTotal, 0).toFixed(2)
+      );
+      const shipping = 0;
+      const total = Number((subtotal + shipping).toFixed(2));
+      const [order] = await Order.create(
+        [
+          {
+            orderNumber: createOrderNumber(),
+            status: paymentMethod === "not_selected" ? "pending" : "awaiting_payment",
+            paymentStatus: "unpaid",
+            paymentMethod,
+            payment: getPaymentData(paymentMethod, total),
+            customer,
+            items: orderItems,
+            subtotal,
+            shipping,
+            total,
+            currency: "USD",
+            reservationExpiresAt: getReservationExpiresAt(),
+            stockReserved: true,
+          },
+        ],
+        { session }
+      );
 
-  const subtotal = Number(
-    orderItems.reduce((sum, item) => sum + item.lineTotal, 0).toFixed(2)
-  );
-  const shipping = 0;
-  const total = Number((subtotal + shipping).toFixed(2));
+      createdOrder = order;
+    });
 
-  const order = await Order.create({
-    orderNumber: createOrderNumber(),
-    status: paymentMethod === "not_selected" ? "pending" : "awaiting_payment",
-    paymentStatus: "unpaid",
-    paymentMethod,
-    payment: getPaymentData(paymentMethod, total),
-    customer,
-    items: orderItems,
-    subtotal,
-    shipping,
-    total,
-    currency: "USD",
-  });
-
-  return serializeOrder(order);
+    return serializeOrder(createdOrder);
+  } finally {
+    await session.endSession();
+  }
 }
