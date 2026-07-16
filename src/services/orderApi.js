@@ -1,3 +1,5 @@
+import { getCustomerAccessToken } from "./customerApi";
+
 const apiBaseUrl = String(import.meta.env.VITE_API_BASE_URL || "").replace(/\/$/, "");
 
 async function parseResponse(response) {
@@ -10,12 +12,18 @@ async function parseResponse(response) {
   return data;
 }
 
+function getHeaders() {
+  const token = getCustomerAccessToken();
+  return {
+    "Content-Type": "application/json",
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+  };
+}
+
 export async function createOrder(payload) {
   const response = await fetch(`${apiBaseUrl}/api/orders`, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
+    headers: getHeaders(),
     body: JSON.stringify(payload),
   });
 
@@ -28,11 +36,9 @@ export async function verifyOrderPayment(orderNumber, payload) {
     `${apiBaseUrl}/api/orders/${encodeURIComponent(orderNumber)}/verify-payment`,
     {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers: getHeaders(),
       body: JSON.stringify(payload),
-    }
+    },
   );
 
   const data = await parseResponse(response);
