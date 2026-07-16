@@ -4,6 +4,7 @@ import {
   normalizeEvmAddress,
   normalizeTransactionHash,
 } from "../config/cryptoPayment.js";
+import { releaseOrderStock } from "./stockReservation.js";
 
 const ERC20_TRANSFER_SELECTOR = "0xa9059cbb";
 
@@ -111,6 +112,22 @@ function parseHexNumber(value) {
   return Number.parseInt(value, 16);
 }
 
+function isReservationExpired(order) {
+  if (!order?.reservationExpiresAt) return false;
+  return new Date(order.reservationExpiresAt).getTime() <= Date.now();
+}
+
+async function rejectExpiredReservation(order) {
+  if (order?.stockReserved) {
+    await releaseOrderStock(order);
+  }
+
+  throw createHttpError(
+    "The payment window expired. Create a new order before paying.",
+    409
+  );
+}
+
 export async function verifyCryptoPayment({
   order,
   transactionHash,
@@ -136,6 +153,15 @@ export async function verifyCryptoPayment({
   if (order.paymentStatus === "paid") {
     if (order.payment?.transactionHash === hash) return order;
     throw createHttpError("This order is already paid.", 409);
+  }
+
+  if (
+    order.status === "expired" ||
+    order.status === "cancelled" ||
+    !order.stockReserved ||
+    isReservationExpired(order)
+  ) {
+    await rejectExpiredReservation(order);
   }
 
   const reusedTransaction = await Order.findOne({
@@ -226,10 +252,12 @@ export async function verifyCryptoPayment({
     );
   }
 
-  order.status = "processing";
-  order.paymentStatus = "paid";
-  order.payment = {
-    ...order.payment?.toObject?.(),
+  const existingPayment = order.payment?.toObject
+    ? order.payment.toObject()
+    : order.payment || {};
+  const committedAt = new Date();
+  const nextPayment = {
+    ...existingPayment,
     provider: "onchain",
     network: order.payment?.network || config.network,
     chainId: Number(order.payment?.chainId || config.chainId),
@@ -244,11 +272,67 @@ export async function verifyCryptoPayment({
     currency: order.payment?.currency || config.token,
     blockNumber: transactionBlock,
     confirmations,
-    confirmedAt: new Date(),
+    confirmedAt: committedAt,
     failedAt: null,
     failureReason: "",
   };
 
-  await order.save();
-  return order;
+  let verifiedOrder;
+
+  try {
+    verifiedOrder = await Order.findOneAndUpdate(
+      {
+        _id: order._id,
+        paymentStatus: { $in: ["unpaid", "pending"] },
+        stockReserved: true,
+        stockReleasedAt: null,
+        reservationExpiresAt: { $gt: committedAt },
+      },
+      {
+        $set: {
+          status: "processing",
+          paymentStatus: "paid",
+          payment: nextPayment,
+          stockReserved: false,
+          stockCommittedAt: committedAt,
+          reservationExpiresAt: null,
+        },
+      },
+      {
+        new: true,
+        runValidators: true,
+      }
+    );
+  } catch (error) {
+    if (error?.code === 11000) {
+      throw createHttpError(
+        "This transaction has already been used for another order.",
+        409
+      );
+    }
+
+    throw error;
+  }
+
+  if (verifiedOrder) {
+    return verifiedOrder;
+  }
+
+  const currentOrder = await Order.findById(order._id);
+
+  if (
+    currentOrder?.paymentStatus === "paid" &&
+    currentOrder.payment?.transactionHash === hash
+  ) {
+    return currentOrder;
+  }
+
+  if (currentOrder && isReservationExpired(currentOrder)) {
+    await releaseOrderStock(currentOrder);
+  }
+
+  throw createHttpError(
+    "The order reservation is no longer available. Create a new order.",
+    409
+  );
 }
