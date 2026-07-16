@@ -14,7 +14,6 @@ import { wagmiAdapter } from "./config/wagmi";
 import "./index.css";
 import "./components/AuthModal/FirebaseAuthOptions.css";
 import App from "./App.jsx";
-import "./styles/RotavoySignature.css";
 
 const queryClient = new QueryClient();
 
