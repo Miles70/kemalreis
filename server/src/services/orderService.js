@@ -1,8 +1,8 @@
 import crypto from "node:crypto";
-import mongoose from "mongoose";
 import { getPublicCryptoPaymentConfig } from "../config/cryptoPayment.js";
 import { Order } from "../models/Order.js";
 import { Product } from "../models/Product.js";
+import { runWithOptionalMongoTransaction } from "./mongoTransactions.js";
 
 const MAX_ORDER_ITEMS = 50;
 const MAX_ITEM_QUANTITY = 10;
@@ -157,6 +157,121 @@ function createAvailabilityError(productKey, product) {
   return error;
 }
 
+async function reserveRequestedProducts(requestedItems, session = null) {
+  const orderItems = [];
+
+  for (const { productKey, quantity } of requestedItems) {
+    const options = {
+      returnDocument: "after",
+      ...(session ? { session } : {}),
+    };
+
+    const product = await Product.findOneAndUpdate(
+      {
+        key: productKey,
+        isActive: true,
+        stock: { $gte: quantity },
+      },
+      {
+        $inc: { stock: -quantity },
+      },
+      options
+    ).lean();
+
+    if (!product) {
+      const query = Product.findOne({
+        key: productKey,
+        isActive: true,
+      });
+
+      if (session) query.session(session);
+      const availableProduct = await query.lean();
+      throw createAvailabilityError(productKey, availableProduct);
+    }
+
+    const unitPrice = Number(product.price);
+    const lineTotal = Number((unitPrice * quantity).toFixed(2));
+
+    orderItems.push({
+      productKey: product.key,
+      title: product.title,
+      categoryKey: product.categoryKey,
+      image: product.image,
+      imageUrl: product.imageUrl,
+      unitPrice,
+      quantity,
+      lineTotal,
+    });
+  }
+
+  return orderItems;
+}
+
+function buildOrderData({ customer, paymentMethod, orderItems }) {
+  const subtotal = Number(
+    orderItems.reduce((sum, item) => sum + item.lineTotal, 0).toFixed(2)
+  );
+  const shipping = 0;
+  const total = Number((subtotal + shipping).toFixed(2));
+
+  return {
+    orderNumber: createOrderNumber(),
+    status: paymentMethod === "not_selected" ? "pending" : "awaiting_payment",
+    paymentStatus: "unpaid",
+    paymentMethod,
+    payment: getPaymentData(paymentMethod, total),
+    customer,
+    items: orderItems,
+    subtotal,
+    shipping,
+    total,
+    currency: "USD",
+    reservationExpiresAt: getReservationExpiresAt(),
+    stockReserved: true,
+  };
+}
+
+async function rollbackReservedProducts(orderItems) {
+  if (!Array.isArray(orderItems) || orderItems.length === 0) return;
+
+  await Product.bulkWrite(
+    orderItems.map((item) => ({
+      updateOne: {
+        filter: { key: item.productKey },
+        update: { $inc: { stock: item.quantity } },
+      },
+    })),
+    { ordered: false }
+  );
+}
+
+async function createOrderWithTransaction({ customer, paymentMethod, requestedItems }, session) {
+  const orderItems = await reserveRequestedProducts(requestedItems, session);
+  const [order] = await Order.create(
+    [buildOrderData({ customer, paymentMethod, orderItems })],
+    { session }
+  );
+
+  return order;
+}
+
+async function createOrderWithCompensation({ customer, paymentMethod, requestedItems }) {
+  let orderItems = [];
+
+  try {
+    orderItems = await reserveRequestedProducts(requestedItems);
+    return await Order.create(buildOrderData({ customer, paymentMethod, orderItems }));
+  } catch (error) {
+    try {
+      await rollbackReservedProducts(orderItems);
+    } catch (rollbackError) {
+      console.error("Could not restore reserved stock after order failure:", rollbackError);
+    }
+
+    throw error;
+  }
+}
+
 export function serializeOrder(orderDocument) {
   const order = orderDocument.toObject ? orderDocument.toObject() : orderDocument;
   const payment = order.payment || {};
@@ -211,89 +326,16 @@ export function serializeOrder(orderDocument) {
 }
 
 export async function createOrder(payload = {}) {
-  const customer = normalizeCustomer(payload.customer);
-  const paymentMethod = normalizePaymentMethod(payload.paymentMethod);
-  const requestedItems = normalizeRequestedItems(payload.items);
-  const session = await mongoose.startSession();
-  let createdOrder = null;
+  const input = {
+    customer: normalizeCustomer(payload.customer),
+    paymentMethod: normalizePaymentMethod(payload.paymentMethod),
+    requestedItems: normalizeRequestedItems(payload.items),
+  };
 
-  try {
-    await session.withTransaction(async () => {
-      const orderItems = [];
+  const createdOrder = await runWithOptionalMongoTransaction({
+    transaction: (session) => createOrderWithTransaction(input, session),
+    fallback: () => createOrderWithCompensation(input),
+  });
 
-      for (const { productKey, quantity } of requestedItems) {
-        const product = await Product.findOneAndUpdate(
-          {
-            key: productKey,
-            isActive: true,
-            stock: { $gte: quantity },
-          },
-          {
-            $inc: { stock: -quantity },
-          },
-          {
-            new: true,
-            session,
-          }
-        ).lean();
-
-        if (!product) {
-          const availableProduct = await Product.findOne({
-            key: productKey,
-            isActive: true,
-          })
-            .session(session)
-            .lean();
-
-          throw createAvailabilityError(productKey, availableProduct);
-        }
-
-        const unitPrice = Number(product.price);
-        const lineTotal = Number((unitPrice * quantity).toFixed(2));
-
-        orderItems.push({
-          productKey: product.key,
-          title: product.title,
-          categoryKey: product.categoryKey,
-          image: product.image,
-          imageUrl: product.imageUrl,
-          unitPrice,
-          quantity,
-          lineTotal,
-        });
-      }
-
-      const subtotal = Number(
-        orderItems.reduce((sum, item) => sum + item.lineTotal, 0).toFixed(2)
-      );
-      const shipping = 0;
-      const total = Number((subtotal + shipping).toFixed(2));
-      const [order] = await Order.create(
-        [
-          {
-            orderNumber: createOrderNumber(),
-            status: paymentMethod === "not_selected" ? "pending" : "awaiting_payment",
-            paymentStatus: "unpaid",
-            paymentMethod,
-            payment: getPaymentData(paymentMethod, total),
-            customer,
-            items: orderItems,
-            subtotal,
-            shipping,
-            total,
-            currency: "USD",
-            reservationExpiresAt: getReservationExpiresAt(),
-            stockReserved: true,
-          },
-        ],
-        { session }
-      );
-
-      createdOrder = order;
-    });
-
-    return serializeOrder(createdOrder);
-  } finally {
-    await session.endSession();
-  }
+  return serializeOrder(createdOrder);
 }
