@@ -195,7 +195,7 @@ export async function createWalletCustomerSession({
   if (
     !address ||
     !challengeId ||
-    !/^0x[a-fA-F0-9]{130}$/.test(normalizedSignature)
+    !/^0x(?:[a-fA-F0-9]{128}|[a-fA-F0-9]{130})$/.test(normalizedSignature)
   ) {
     const error = new Error("Wallet authentication request is invalid.");
     error.statusCode = 400;
