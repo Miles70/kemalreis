@@ -9,7 +9,7 @@ const customerSchema = new mongoose.Schema(
     address: { type: String, required: true, trim: true },
     note: { type: String, trim: true, default: "" },
   },
-  { _id: false }
+  { _id: false },
 );
 
 const orderItemSchema = new mongoose.Schema(
@@ -23,7 +23,7 @@ const orderItemSchema = new mongoose.Schema(
     quantity: { type: Number, required: true, min: 1, max: 10 },
     lineTotal: { type: Number, required: true, min: 0 },
   },
-  { _id: false }
+  { _id: false },
 );
 
 const paymentSchema = new mongoose.Schema(
@@ -51,7 +51,7 @@ const paymentSchema = new mongoose.Schema(
     failedAt: { type: Date, default: null },
     failureReason: { type: String, trim: true, default: "" },
   },
-  { _id: false }
+  { _id: false },
 );
 
 const orderSchema = new mongoose.Schema(
@@ -60,6 +60,12 @@ const orderSchema = new mongoose.Schema(
       type: String,
       required: true,
       unique: true,
+      index: true,
+    },
+    customerAccount: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Customer",
+      default: null,
       index: true,
     },
     status: {
@@ -116,7 +122,7 @@ const orderSchema = new mongoose.Schema(
   {
     timestamps: true,
     versionKey: false,
-  }
+  },
 );
 
 orderSchema.index(
@@ -126,7 +132,7 @@ orderSchema.index(
     partialFilterExpression: {
       "payment.transactionHash": { $type: "string", $gt: "" },
     },
-  }
+  },
 );
 
 export const Order = mongoose.model("Order", orderSchema);
