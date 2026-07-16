@@ -4,6 +4,7 @@ const CartContext = createContext(null);
 
 const CART_STORAGE_KEY = "masterota_cart";
 const LEGACY_CART_STORAGE_KEY = "kemalreis_cart";
+const MAX_ITEM_QUANTITY = 10;
 
 function getStoredCart() {
   try {
@@ -28,6 +29,19 @@ function getStoredCart() {
   }
 }
 
+function getMaximumQuantity(item) {
+  const stock = Number(item?.stock);
+
+  if (!Number.isFinite(stock)) {
+    return MAX_ITEM_QUANTITY;
+  }
+
+  return Math.min(
+    MAX_ITEM_QUANTITY,
+    Math.max(0, Math.floor(stock)),
+  );
+}
+
 export function CartProvider({ children }) {
   const [cartItems, setCartItems] = useState(getStoredCart);
   const [lastAddedItem, setLastAddedItem] = useState(null);
@@ -50,9 +64,18 @@ export function CartProvider({ children }) {
   }, [lastAddedItem]);
 
   function addToCart(product, quantity = 1) {
+    const maximumQuantity = getMaximumQuantity(product);
+
+    if (maximumQuantity < 1) {
+      return;
+    }
+
     const safeQuantity = Math.max(
       1,
-      Math.min(99, Number.parseInt(quantity, 10) || 1),
+      Math.min(
+        maximumQuantity,
+        Number.parseInt(quantity, 10) || 1,
+      ),
     );
 
     setCartItems((currentItems) => {
@@ -61,11 +84,23 @@ export function CartProvider({ children }) {
       );
 
       if (existingItem) {
-        return currentItems.map((item) =>
-          item.key === product.key
-            ? { ...item, quantity: item.quantity + safeQuantity }
-            : item,
-        );
+        return currentItems.map((item) => {
+          if (item.key !== product.key) return item;
+
+          const itemMaximumQuantity = getMaximumQuantity({
+            ...item,
+            stock: product.stock ?? item.stock,
+          });
+
+          return {
+            ...item,
+            stock: product.stock ?? item.stock,
+            quantity: Math.min(
+              itemMaximumQuantity,
+              item.quantity + safeQuantity,
+            ),
+          };
+        });
       }
 
       return [
@@ -77,6 +112,7 @@ export function CartProvider({ children }) {
           price: product.price,
           image: product.image,
           imageUrl: product.imageUrl,
+          stock: product.stock,
           quantity: safeQuantity,
         },
       ];
@@ -96,7 +132,13 @@ export function CartProvider({ children }) {
     setCartItems((currentItems) =>
       currentItems.map((item) =>
         item.key === productKey
-          ? { ...item, quantity: item.quantity + 1 }
+          ? {
+              ...item,
+              quantity: Math.min(
+                getMaximumQuantity(item),
+                item.quantity + 1,
+              ),
+            }
           : item,
       ),
     );
