@@ -13,6 +13,7 @@ const supportedLanguages = [
   "pt",
   "fr",
   "de",
+  "it",
 ];
 
 function normalizeLanguage(language) {
@@ -28,6 +29,7 @@ function normalizeLanguage(language) {
   if (lowerLanguage.startsWith("pt")) return "pt";
   if (lowerLanguage.startsWith("fr")) return "fr";
   if (lowerLanguage.startsWith("de")) return "de";
+  if (lowerLanguage.startsWith("it")) return "it";
 
   return "en";
 }
