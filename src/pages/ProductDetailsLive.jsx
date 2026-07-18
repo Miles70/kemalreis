@@ -16,6 +16,7 @@ import { Link, useParams } from "react-router-dom";
 import ProductCard from "../components/ProductCard/ProductCard";
 import { useCart } from "../context/CartContext";
 import { useLanguage } from "../i18n/LanguageContext";
+import regionalProductDetailsTranslations from "../i18n/regionalProductDetailsTranslations";
 import { getStoreProduct, getStoreProducts } from "../services/productsApi";
 import "./ProductDetailsLive.css";
 
@@ -45,6 +46,7 @@ const copy = {
     brand: "Brand",
     previousImage: "Previous image",
     nextImage: "Next image",
+    fallbackDescription: "Premium marketplace selection with secure checkout, tracked delivery and customer support.",
   },
   tr: {
     back: "Ürünlere dön",
@@ -71,6 +73,7 @@ const copy = {
     brand: "Marka",
     previousImage: "Önceki görsel",
     nextImage: "Sonraki görsel",
+    fallbackDescription: "Güvenli ödeme, takipli teslimat ve müşteri desteği sunan premium pazaryeri seçkisi.",
   },
   ru: {
     back: "Назад к товарам",
@@ -97,6 +100,7 @@ const copy = {
     brand: "Бренд",
     previousImage: "Предыдущее изображение",
     nextImage: "Следующее изображение",
+    fallbackDescription: "Премиальная подборка маркетплейса с безопасной оплатой, отслеживаемой доставкой и поддержкой клиентов.",
   },
   ar: {
     back: "العودة إلى المنتجات",
@@ -123,6 +127,7 @@ const copy = {
     brand: "العلامة التجارية",
     previousImage: "الصورة السابقة",
     nextImage: "الصورة التالية",
+    fallbackDescription: "اختيار مميز من السوق مع دفع آمن وتوصيل قابل للتتبع ودعم للعملاء.",
   },
   zh: {
     back: "返回产品列表",
@@ -149,7 +154,21 @@ const copy = {
     brand: "品牌",
     previousImage: "上一张图片",
     nextImage: "下一张图片",
+    fallbackDescription: "优质商城精选，提供安全结账、可追踪配送和客户支持。",
   },
+};
+
+const numberLocales = {
+  en: "en-US",
+  tr: "tr-TR",
+  ru: "ru-RU",
+  ar: "ar-SA",
+  zh: "zh-CN",
+  es: "es-ES",
+  pt: "pt-BR",
+  fr: "fr-FR",
+  de: "de-DE",
+  it: "it-IT",
 };
 
 function categoryLabel(product, t) {
@@ -166,8 +185,8 @@ function categoryLabel(product, t) {
     .replace(/\b\w/g, (letter) => letter.toUpperCase());
 }
 
-function formatPrice(value) {
-  return `$${Number(value || 0).toLocaleString("en-US", {
+function formatPrice(value, locale) {
+  return `$${Number(value || 0).toLocaleString(locale, {
     minimumFractionDigits: 0,
     maximumFractionDigits: 2,
   })}`;
@@ -177,7 +196,8 @@ function ProductDetailsLive() {
   const { productKey } = useParams();
   const { language, t } = useLanguage();
   const { addToCart } = useCart();
-  const labels = copy[language] || copy.en;
+  const labels = regionalProductDetailsTranslations[language] || copy[language] || copy.en;
+  const numberLocale = numberLocales[language] || numberLocales.en;
   const [product, setProduct] = useState(null);
   const [relatedProducts, setRelatedProducts] = useState([]);
   const [quantity, setQuantity] = useState(1);
@@ -371,7 +391,7 @@ function ProductDetailsLive() {
             <Star size={17} fill="currentColor" />
             <strong>{Number(product.rating || 0).toFixed(1)}</strong>
             <span>
-              {Number(product.reviewCount || 0).toLocaleString("en-US")} {labels.reviews}
+              {Number(product.reviewCount || 0).toLocaleString(numberLocale)} {labels.reviews}
             </span>
             {product.brand ? <small>{labels.brand}: {product.brand}</small> : null}
           </div>
@@ -384,15 +404,14 @@ function ProductDetailsLive() {
           </div>
 
           <div className="liveProductPrice">
-            <strong>{formatPrice(product.price)}</strong>
+            <strong>{formatPrice(product.price, numberLocale)}</strong>
             {product.oldPrice && product.oldPrice > product.price ? (
-              <del>{formatPrice(product.oldPrice)}</del>
+              <del>{formatPrice(product.oldPrice, numberLocale)}</del>
             ) : null}
           </div>
 
           <p className="liveProductDescription">
-            {product.description ||
-              "Premium marketplace selection with secure checkout, tracked delivery and customer support."}
+            {product.description || labels.fallbackDescription}
           </p>
 
           {features.length ? (
