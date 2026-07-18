@@ -21,6 +21,7 @@ import { useCart } from "../../context/CartContext";
 import { useCustomerAuth } from "../../context/CustomerAuthContext";
 import CustomerAvatar from "../CustomerAvatar/CustomerAvatar";
 import LanguageSwitcher from "../LanguageSwitcher";
+import LocalNavigation from "../LocalNavigation/LocalNavigation";
 import siteConfig from "../../config/site";
 
 import "./Header.css";
@@ -179,6 +180,8 @@ function Header() {
             >
               {t("nav.travel")}
             </NavLink>
+
+            <LocalNavigation />
           </nav>
 
           <div className="headerActions">
